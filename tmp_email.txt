@@ -1,0 +1,84 @@
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:03<00:09,  3.16s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:06<00:06,  3.18s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:09<00:03,  3.15s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:12<00:00,  3.26s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:12<00:00,  3.23s/it]
+
+== Variant k3_refs0_guideA ==
+k3_refs0_guideA:   0%|          | 0/50 [00:00<?, ?it/s]/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:650: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+k3_refs0_guideA:   2%|▏         | 1/50 [00:30<24:39, 30.19s/it]k3_refs0_guideA:   4%|▍         | 2/50 [01:05<26:20, 32.93s/it]k3_refs0_guideA:   6%|▌         | 3/50 [01:38<25:48, 32.96s/it]k3_refs0_guideA:   8%|▊         | 4/50 [02:07<24:17, 31.69s/it]k3_refs0_guideA:  10%|█         | 5/50 [02:37<23:16, 31.03s/it]k3_refs0_guideA:  12%|█▏        | 6/50 [03:06<22:19, 30.43s/it]k3_refs0_guideA:  14%|█▍        | 7/50 [03:39<22:24, 31.26s/it]k3_refs0_guideA:  16%|█▌        | 8/50 [04:13<22:31, 32.17s/it]k3_refs0_guideA:  18%|█▊        | 9/50 [04:51<23:12, 33.97s/it]k3_refs0_guideA:  20%|██        | 10/50 [05:27<22:57, 34.44s/it]k3_refs0_guideA:  22%|██▏       | 11/50 [06:06<23:15, 35.78s/it]k3_refs0_guideA:  24%|██▍       | 12/50 [06:35<21:24, 33.79s/it]k3_refs0_guideA:  26%|██▌       | 13/50 [06:58<18:52, 30.62s/it]k3_refs0_guideA:  28%|██▊       | 14/50 [07:35<19:28, 32.45s/it]k3_refs0_guideA:  30%|███       | 15/50 [08:05<18:31, 31.77s/it]k3_refs0_guideA:  32%|███▏      | 16/50 [08:35<17:39, 31.17s/it]k3_refs0_guideA:  34%|███▍      | 17/50 [09:12<18:11, 33.08s/it]k3_refs0_guideA:  36%|███▌      | 18/50 [09:52<18:44, 35.13s/it]k3_refs0_guideA:  38%|███▊      | 19/50 [10:33<19:04, 36.93s/it]k3_refs0_guideA:  40%|████      | 20/50 [11:01<17:03, 34.11s/it]k3_refs0_guideA:  42%|████▏     | 21/50 [11:33<16:06, 33.34s/it]k3_refs0_guideA:  44%|████▍     | 22/50 [12:01<14:51, 31.84s/it]k3_refs0_guideA:  46%|████▌     | 23/50 [12:25<13:17, 29.53s/it]k3_refs0_guideA:  48%|████▊     | 24/50 [13:04<14:02, 32.42s/it]k3_refs0_guideA:  50%|█████     | 25/50 [13:36<13:26, 32.25s/it]k3_refs0_guideA:  52%|█████▏    | 26/50 [14:08<12:51, 32.16s/it]k3_refs0_guideA:  54%|█████▍    | 27/50 [14:30<11:09, 29.12s/it]k3_refs0_guideA:  56%|█████▌    | 28/50 [15:00<10:43, 29.25s/it]k3_refs0_guideA:  58%|█████▊    | 29/50 [15:35<10:55, 31.21s/it]k3_refs0_guideA:  60%|██████    | 30/50 [16:04<10:06, 30.32s/it]k3_refs0_guideA:  62%|██████▏   | 31/50 [16:36<09:49, 31.04s/it]k3_refs0_guideA:  64%|██████▍   | 32/50 [17:11<09:38, 32.14s/it]k3_refs0_guideA:  66%|██████▌   | 33/50 [17:46<09:18, 32.87s/it]k3_refs0_guideA:  68%|██████▊   | 34/50 [18:22<09:03, 33.96s/it]k3_refs0_guideA:  70%|███████   | 35/50 [18:52<08:13, 32.87s/it]k3_refs0_guideA:  72%|███████▏  | 36/50 [19:22<07:25, 31.79s/it]k3_refs0_guideA:  74%|███████▍  | 37/50 [19:54<06:56, 32.01s/it]k3_refs0_guideA:  76%|███████▌  | 38/50 [20:38<07:06, 35.58s/it]k3_refs0_guideA:  78%|███████▊  | 39/50 [21:10<06:18, 34.42s/it]k3_refs0_guideA:  80%|████████  | 40/50 [21:39<05:28, 32.87s/it]k3_refs0_guideA:  82%|████████▏ | 41/50 [22:20<05:18, 35.39s/it]k3_refs0_guideA:  84%|████████▍ | 42/50 [23:08<05:11, 38.99s/it]k3_refs0_guideA:  86%|████████▌ | 43/50 [23:40<04:17, 36.82s/it]k3_refs0_guideA:  88%|████████▊ | 44/50 [24:18<03:44, 37.46s/it]k3_refs0_guideA:  90%|█████████ | 45/50 [24:50<02:58, 35.77s/it]k3_refs0_guideA:  92%|█████████▏| 46/50 [25:20<02:15, 33.99s/it]k3_refs0_guideA:  94%|█████████▍| 47/50 [25:57<01:44, 34.71s/it]k3_refs0_guideA:  96%|█████████▌| 48/50 [26:16<01:00, 30.11s/it]k3_refs0_guideA:  98%|█████████▊| 49/50 [26:35<00:26, 26.89s/it]k3_refs0_guideA: 100%|██████████| 50/50 [26:53<00:00, 24.26s/it]k3_refs0_guideA: 100%|██████████| 50/50 [26:53<00:00, 32.28s/it]
+ASR (attack_succeeded): 0.340
+ASR (direct baseline): 0.140
+Localization F1 (injected-span, our method): 0.501
+Localization F1 (injected-span, direct baseline): 0.882
+ASR after sanitizer (our method): 0.180
+ASR after sanitizer (direct baseline): 0.000
+
+== Variant k3_refs0_guideB ==
+k3_refs0_guideB:   0%|          | 0/50 [00:00<?, ?it/s]k3_refs0_guideB:   2%|▏         | 1/50 [00:23<18:55, 23.17s/it]k3_refs0_guideB:   4%|▍         | 2/50 [01:09<29:27, 36.82s/it]k3_refs0_guideB:   6%|▌         | 3/50 [01:34<24:45, 31.61s/it]k3_refs0_guideB:   8%|▊         | 4/50 [02:02<23:05, 30.12s/it]k3_refs0_guideB:  10%|█         | 5/50 [02:30<22:00, 29.35s/it]k3_refs0_guideB:  12%|█▏        | 6/50 [03:11<24:14, 33.06s/it]k3_refs0_guideB:  14%|█▍        | 7/50 [03:44<23:53, 33.33s/it]k3_refs0_guideB:  16%|█▌        | 8/50 [04:02<19:51, 28.36s/it]k3_refs0_guideB:  18%|█▊        | 9/50 [04:41<21:39, 31.70s/it]k3_refs0_guideB:  20%|██        | 10/50 [05:15<21:35, 32.38s/it]k3_refs0_guideB:  22%|██▏       | 11/50 [05:50<21:29, 33.06s/it]k3_refs0_guideB:  24%|██▍       | 12/50 [06:10<18:29, 29.21s/it]k3_refs0_guideB:  26%|██▌       | 13/50 [06:47<19:21, 31.40s/it]k3_refs0_guideB:  28%|██▊       | 14/50 [07:16<18:24, 30.68s/it]k3_refs0_guideB:  28%|██▊       | 14/50 [07:16<18:43, 31.21s/it]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 818, in <module>
+    main()
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 477, in main
+    base_atk = judge_attack(judge, question=question, instruction=malicious, response=base_resp)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/eval/judge.py", line 72, in judge_attack
+    raw = chat.generate(prompt)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/models/hf_chat.py", line 80, in generate
+    out = self.model.generate(
+          ^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 2255, in generate
+    result = self._sample(
+             ^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 3257, in _sample
+    outputs = model_forward(**model_inputs, return_dict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 175, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 816, in forward
+    outputs = self.model(
+              ^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 574, in forward
+    layer_outputs = decoder_layer(
+                    ^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 175, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 274, in forward
+    hidden_states = self.post_attention_layernorm(hidden_states)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 175, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 220, in forward
+    variance = hidden_states.pow(2).mean(-1, keepdim=True)
+               ^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

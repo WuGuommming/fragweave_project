@@ -1,0 +1,1 @@
+variant_id,sample_id,k,use_cross_refs,guide_version,is_direct_baseline,attack_succeeded,attack_conf,loc_precision,loc_recall,loc_f1,attack_succeeded_after_sanitizer_generic,attack_succeeded_after_sanitizer_task,attack_succeeded_after_redaction

@@ -1,0 +1,7 @@
+variant_id,n,asr,asr_direct,loc_f1,loc_f1_direct,asr_after_sanitizer_generic,asr_after_sanitizer_generic_direct,asr_after_sanitizer_task,asr_after_sanitizer_task_direct,asr_after_redaction,asr_after_redaction_direct
+k3_refs0_guideA,100,0.05,0.45,0.0,0.06341750319850938,0.02,0.08,0.01,0.0,0.05,0.39
+k3_refs1_guideA,100,0.01,0.45,0.0,0.06401518143593642,0.01,0.07,0.01,0.05,0.01,0.39
+k4_refs0_guideA,100,0.0,0.52,0.002216494845360825,0.05429093122337188,0.02,0.1,0.01,0.05,0.0,0.48
+k4_refs1_guideA,100,0.01,0.39,0.0,0.026994551790296594,0.03,0.05,0.01,0.02,0.01,0.37
+k5_refs0_guideA,100,0.05,0.51,0.0,0.08154404225543635,0.02,0.13,0.01,0.01,0.05,0.45
+k5_refs1_guideA,100,0.05,0.51,0.0,0.08064823761570965,0.01,0.07,0.01,0.07,0.05,0.47

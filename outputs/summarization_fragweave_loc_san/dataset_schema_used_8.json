@@ -1,0 +1,8 @@
+{
+  "jsonl_path": "/home/gwu3/code/fragweave_project/data/bipia/benchmark/abstract/test.jsonl",
+  "task": "summarization",
+  "context_key": "context",
+  "question_key": "<default>",
+  "answer_key": "",
+  "id_key": ""
+}

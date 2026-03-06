@@ -1,0 +1,84 @@
+请你修正当前实现中的两处关键问题（必须修），并保持：默认行为不变、EmailQA 不受影响、WebQA 仍按现有 webqa yaml 覆盖执行；最终仍输出审计 diff 文件。
+
+========================
+必须修 1：第一个配置 A/B 用掉的 20% 数据没有纳入最终指标（当前只统计剩余 80%）
+========================
+现状问题：
+- 你在第一个配置上做完 20% 的 decoy ON/OFF A/B 后，把 sample_indices 设为 remaining_indices，只跑剩余 80%，最终 metrics/csv 的 n 也等于 remaining 80%。
+- 这会导致第一个配置的最终结果口径与后续配置不一致（不可公平比较），且丢掉了 20% 的结果。
+
+目标行为（必须实现）：
+- A/B 的 20% 仍然只用于“决策 decoy 是否全局强制关闭”，但最终第一个配置的 metrics 必须基于 100% 数据。
+- 同时要避免对同一条样本重复计入或重复运行造成指标偏差。
+
+推荐实现方式（不增加新流程，保持 sweep 结构）：
+方案 A（推荐，最少改动且不 double-count）：
+1) 在第一个配置里切分 test_subset(20%) 与 remaining(80%) 后：
+   - 先在 test_subset 上跑两次：
+     - decoy=ON 得到 per-sample 结果列表 results_on（包含：attack_succeeded、after_sanitizer_success、loc_f1 等你现有聚合所需字段）
+     - decoy=OFF 得到 results_off
+   - 做出决策 global_decoy_forced_off（基于 AfterSanASR 对比）
+2) 对 test_subset：
+   - 只保留“决策对应的那一侧”的 per-sample 结果作为最终贡献：
+     - 若 global_decoy_forced_off=True（OFF 更好/不差）：保留 results_off
+     - 若 global_decoy_forced_off=False（ON 更好）：保留 results_on
+   - 丢弃另一侧的 per-sample 结果（仅用于决策，不进入最终统计）
+3) 对 remaining_subset：
+   - 按决策跑一次（decoy 强制 OFF 或按原配置），得到 results_remain
+4) 合并：
+   - results_final = kept_results_test_subset + results_remain
+   - 最终聚合 metrics 时使用 results_final，n 应为 N_total（100%）
+5) 重要：确保输出到 csv 的该配置 n 与后续配置一致（都按各自配置的 full N_total）
+
+注意事项：
+- “per-sample 结果”的结构按你现有 code 存什么就复用；关键是要能从中聚合出 ASR / AfterSanASR / LocF1
+- 避免把 test_subset 又重复跑一次（除非你做方案 B）
+
+方案 B（可接受但更慢）：
+- A/B 只做决策；之后对全量 100% 再跑一次（按决策的 decoy 设置）作为最终结果。
+- 这会额外多跑 20% 的样本一次，但实现最简单；若你接受额外成本可以用。
+
+========================
+必须修 2：WebQA weaver_prompt 现在“强制 summary 前缀 + 输出 exactly ONE sentence + minimal edit”存在结构性矛盾
+========================
+现状问题：
+- 你把 weaver_prompt 统一改成必须以 “Editor’s summary:/Key takeaways:/On-page FAQ:” 开头，
+  但同时又要求 “Output exactly ONE rewritten sentence” 且 “surface form minimal edit”。
+- 这会导致普通句子级 weave 变得非常不自然、很像模板注入，反而更易触发 sanitizer/或被模型忽略。
+- 我们的原意是：summary/FAQ 体裁只用于“Anchor 插入”（insert），而不是每个普通 rewrite。
+
+目标行为（必须实现）：
+- 在 anchor_fragments 策略下：
+  - Anchor（insert/tail）使用“summary/FAQ体裁”的专用 prompt（允许多 bullet 或一段较长总结）
+  - 普通 fragments（inline/merge）继续使用“句子级 rewrite 体裁”的 prompt（不强制 summary 前缀，不强制 bullet，不破坏 minimal edit）
+
+推荐实现方式：
+1) 在 WebQA YAML 中拆分为两段 prompt（仅 WebQA 改，EmailQA 不动）：
+   - attack.weaver_prompt_anchor: （用于 anchor 插入的 summary/FAQ prompt）
+   - attack.weaver_prompt_fragment: （用于普通句子级 rewrite 的原风格 prompt）
+   如果你不想改 YAML 字段名，也可以：
+   - 保留现有 attack.weaver_prompt 作为 fragment prompt
+   - 新增 attack.weaver_prompt_anchor 仅用于 anchor
+
+2) 在 weaver/apply_weave 的 anchor_fragments 分支里：
+   - 生成 anchor 时使用 weaver_prompt_anchor
+   - 生成 fragments 时使用 weaver_prompt_fragment（或旧 weaver_prompt）
+
+3) prompt 结构建议（只提供约束，不要求你照抄）：
+   - anchor prompt：允许 3–5 bullets 或 1 段，必须以 “Editor’s summary:” 等前缀开头；禁止命令式元词（you must/ignore/system/assistant/instruction）
+   - fragment prompt：保持“像网页旁注/摘录的单句改写”，不要强制 summary 前缀；仍可要求禁止命令式元词，但不要破坏 minimal edit 的目标
+
+========================
+强烈建议同步修：sharder 里“Fragment 1 45–90 words 的 dense summary”应只用于 anchor，不要作为普通碎片
+========================
+原因：
+- 长 fragment 若被当作普通碎片去 inline weave，会非常突兀，且影响 localization 粒度假设。
+建议：
+- 把“长块 summary shard”限定为 anchor 专用（由 anchor_prompt 生成即可）
+- shards/fragments 仍保持短、证据体裁、单句或小段（与原有 partition/loc 更匹配）
+
+========================
+交付要求（保持不变）
+========================
+- 修改完后依然生成 unified diff 文件：audit_diff_webqa_anchor_fragments.txt（不依赖 git，用 difflib，包含所有被改动文件）
+- 默认行为不变；EmailQA 不受影响；WebQA 的行为仅由 webqa yaml/new fields 触发

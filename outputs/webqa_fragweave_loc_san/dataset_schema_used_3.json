@@ -1,0 +1,8 @@
+{
+  "jsonl_path": "/home/gwu3/code/fragweave_project/data/bipia/benchmark/qa/test.jsonl",
+  "task": "web_qa",
+  "context_key": "context",
+  "question_key": "question",
+  "answer_key": "",
+  "id_key": ""
+}

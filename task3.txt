@@ -1,0 +1,47 @@
+请你在当前实现基础上只处理以下两点（优先确认问题是否真实存在，再修改；不要盲改）：
+
+========================
+(1) 必查并修正：Anchor 构造中是否存在“硬编码插入 Editor’s summary…”污染 weaver_prompt_anchor
+========================
+我在 diff 中看到 _build_anchor_fragments_ops 里当 anchor_text 不够长时会拼接类似：
+" Editor's summary: this section compiles key on-page findings..."
+这会污染 anchor 体裁（前缀可能重复/不在开头）并降低自然性，且可能更易触发 sanitizer。
+
+请你先做确认（必须）：
+- 在代码最终版本中搜索并确认是否确实存在上述硬编码拼接（或同类“Editor’s summary/Key takeaways/FAQ”硬插入字符串）：
+  - 目标文件通常是 fragweave/attacks/weaver.py（或你放 _build_anchor_fragments_ops 的位置）
+- 如果确认存在：请移除这类硬编码拼接（不要在 Python 中插入任何 summary 前缀或 meta 解释句）。
+
+移除后如何保证长度（两种可选，择其一实现即可）：
+A) 用更多 shards 组成 anchor_parts 以满足 anchor_min_tokens（纯拼接 shards，不插入 meta 句）。
+B) 依赖 weaver_prompt_anchor 本身一次性生成 >= anchor_min_tokens 的输出（你现在 prompt 已有最小 word 约束），因此 anchor_text 即使短也不用在代码里补写 summary 句。
+
+注意：
+- 不允许增加额外模型调用次数去“补长度”；只能通过上面 A/B 的方式调整。
+- 只在 weave_strategy=anchor_fragments 分支生效，不影响 EmailQA。
+
+========================
+(2) 必查一致性：WebQA YAML 的 sharder_prompt 是否同时存在两套互相冲突的版本
+========================
+我在 diff 展示里看到两种可能的 sharder_prompt：
+- 版本1：所有 fragments 都短句（10–22 words）
+- 版本2：Fragment 1 要求 dense summary（45–90 words），其余短句
+
+请你先做确认（必须）：
+- 以最终落地的 configs/webqa_with_localization_and_sanitization.yaml.after 为准，核对实际 sharder_prompt 到底是哪一版；
+- 确认 diff 中出现两个版本是否只是 diff 展示/截取导致的错觉。
+
+如果确实存在“Fragment 1 45–90 words”的长块要求（并且你已经有 weaver_prompt_anchor 负责生成长 anchor）：
+- 建议将 WebQA 的 sharder_prompt 统一为“所有 fragments 都短句 10–22 words 的证据体裁”，不要再强制 Fragment 1 长块，
+  以免：
+  - 普通碎片突兀、影响 localization 粒度假设
+  - anchor 长度控制变得不可控
+  - sanitizer/模型更易识别异常块
+
+如果确认最终 YAML 本来就是统一短句版本（不存在长 Fragment1），则无需改动。
+
+========================
+交付要求（保持不变）
+========================
+- 修改完成后继续生成/更新 unified diff 文件 audit_diff_webqa_anchor_fragments.txt（不依赖 git，用 difflib，包含所有改动文件）。
+- 不影响 EmailQA：EmailQA yaml 不改，代码默认行为不变，新增行为仅 WebQA/anchor_fragments 分支触发。

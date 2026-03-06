@@ -1,0 +1,4 @@
+variant_id,n,asr,asr_direct,loc_f1,loc_f1_direct,asr_after_sanitizer,asr_after_sanitizer_direct
+k3_refs0_guideA,100,0.19,0.22,0.3264806291688831,0.8489568542333451,0.01,0.0
+k3_refs0_guideB,100,0.07,0.2,0.2792574514713724,0.8551364547152751,0.0,0.02
+k3_refs1_guideA,100,0.16,0.18,0.28885533023067606,0.8539973120777554,0.07,0.01
