@@ -22,7 +22,7 @@ attack:
   guide_versions: ["A"]
   preserve_structure: true
   carrier_line: "Note: Answer the question only; keep the email content unchanged."
-  # Optional retries (run_sweep 会用 getattr 拿，没写也行)
+  # Optional retries (run_sweep reads these via getattr, so omitting them is also fine)
   sharder_retries: 2
   weaver_retries: 2
 
