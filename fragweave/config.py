@@ -50,6 +50,7 @@ class DatasetConfig:
 
 @dataclass
 class AttackConfig:
+    weave_strategy: str = "auto"
     k_values: tuple[int, ...] = (3, 4, 5, 6)
     use_cross_refs_values: tuple[bool, ...] = (False, True)
 
