@@ -224,15 +224,31 @@ def choose_random_ops(
     n = len(meta)
     available = [i for i in range(n) if int(meta[i]["global_index"]) not in exclude_sent_indices]
 
+    task_low = (task or "").lower()
+    email_like = task_low in {"email_qa", "emailqa", "email"}
+    used_globals: List[int] = []
+
+
     for s in items:
         if available:
-            idx = rng.choice(available)
+            if email_like and used_globals and len(available) > 1:
+                # Prefer spatially separated placements in EmailQA to avoid clustered sanitization drops.
+                idx = max(
+                    available,
+                    key=lambda i: min(abs(int(meta[i]["global_index"]) - g) for g in used_globals),
+                )
+            else:
+                idx = rng.choice(available)
             if idx in available:
                 available.remove(idx)
         else:
             idx = rng.randint(0, n - 1)
+        gidx = int(meta[idx]["global_index"])
+        used_globals.append(gidx)
         merge_with = rng.choice(["prev", "next"])
-        ops.append(WeaveOp(shard=s, sent_index=int(meta[idx]["global_index"]), merge_with=merge_with))
+
+        ops.append(WeaveOp(shard=s, sent_index=gidx, merge_with=merge_with))
+
     return ops, ctx2
 
 
@@ -825,7 +841,7 @@ def _redact_by_spans(context: str, spans: Optional[List[Tuple[int, int]]]) -> st
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--config", type=str, default="configs/emailqa.yaml")
+    ap.add_argument("--config", type=str, default="configs/emailqa_with_localization_and_sanitization.yaml")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -1071,50 +1087,18 @@ def main() -> None:
                                     else:
                                         guide_block = "\n\n---\n" + _format_guidance_block(guide_res.snippets, quoted=True) + "\n"
 
-                                if weave_strategy == "anchor_fragments" and is_web_task:
-                                    anchor_ops = [op for op in shard_ops if str(op.merge_with).lower().startswith("insert")]
-                                    fragment_ops = [op for op in shard_ops if op not in anchor_ops]
-                                    poisoned_ctx_core = ctx_for_weave
-                                    shadow_ctx_core = ctx_for_weave
-                                    if anchor_ops:
-                                        poisoned_ctx_core, shadow_ctx_core, _ = apply_weave_with_shadow(
-                                            weaver,
-                                            poisoned_ctx_core,
-                                            anchor_ops,
-                                            task=task,
-                                            max_retries=weaver_retries,
-                                            prompt_template=weaver_prompt_anchor,
-                                            tag_chat=weaver,
-                                            tag_start=cfg.localization.tag_start,
-                                            tag_end=cfg.localization.tag_end,
-                                            tag_max_retries=tagger_retries,
-                                        )
-                                    if fragment_ops:
-                                        poisoned_ctx_core, shadow_ctx_core, _ = apply_weave_with_shadow(
-                                            weaver,
-                                            shadow_ctx_core,
-                                            fragment_ops,
-                                            task=task,
-                                            max_retries=weaver_retries,
-                                            prompt_template=weaver_prompt_fragment,
-                                            tag_chat=weaver,
-                                            tag_start=cfg.localization.tag_start,
-                                            tag_end=cfg.localization.tag_end,
-                                            tag_max_retries=tagger_retries,
-                                        )
-                                else:
-                                    poisoned_ctx_core, shadow_ctx_core, _ = apply_weave_with_shadow(
-                                        weaver,
-                                        ctx_for_weave,
-                                        shard_ops,
-                                        task=task,
-                                        max_retries=weaver_retries,
-                                        prompt_template=weaver_prompt_fragment,
-                                        tag_chat=weaver,
-                                        tag_start=cfg.localization.tag_start,
-                                        tag_end=cfg.localization.tag_end,
-                                        tag_max_retries=tagger_retries,
-                                    )
+                                poisoned_ctx_core, shadow_ctx_core, _ = apply_weave_with_shadow(
+                                    weaver,
+                                    ctx_for_weave,
+                                    shard_ops,
+                                    task=task,
+                                    max_retries=weaver_retries,
+                                    prompt_template=weaver_prompt_fragment,
+                                    tag_chat=weaver,
+                                    tag_start=cfg.localization.tag_start,
+                                    tag_end=cfg.localization.tag_end,
+                                    tag_max_retries=tagger_retries,
+                                )
                                 poisoned_ctx = poisoned_ctx_core + guide_block
                                 shadow_ctx = shadow_ctx_core
                                 if detector is not None and (cfg.localization.gt_mode or "").lower() == "shadow_tags":
@@ -1482,90 +1466,29 @@ def main() -> None:
 
                         shadow_ctx = None
                         if detector is not None and (cfg.localization.gt_mode or "").lower() == "shadow_tags":
-                            if weave_strategy == "anchor_fragments" and is_web_task:
-                                anchor_ops = [op for op in ops_all if str(op.merge_with).lower().startswith("insert")]
-                                fragment_ops = [op for op in ops_all if op not in anchor_ops]
-                                poisoned_ctx_core = ctx_for_weave
-                                shadow_ctx_core = ctx_for_weave
-                                weave_debug = []
-                                if anchor_ops:
-                                    poisoned_ctx_core, shadow_ctx_core, dbg_anchor = apply_weave_with_shadow(
-                                        weaver,
-                                        poisoned_ctx_core,
-                                        anchor_ops,
-                                        task=task,
-                                        max_retries=weaver_retries,
-                                        prompt_template=weaver_prompt_anchor,
-                                        tag_chat=weaver,
-                                        tag_start=cfg.localization.tag_start,
-                                        tag_end=cfg.localization.tag_end,
-                                        tag_max_retries=tagger_retries,
-                                    )
-                                    weave_debug.extend(dbg_anchor)
-                                if fragment_ops:
-                                    poisoned_ctx_core, shadow_ctx_core, dbg_frag = apply_weave_with_shadow(
-                                        weaver,
-                                        shadow_ctx_core,
-                                        fragment_ops,
-                                        task=task,
-                                        max_retries=weaver_retries,
-                                        prompt_template=weaver_prompt_fragment,
-                                        tag_chat=weaver,
-                                        tag_start=cfg.localization.tag_start,
-                                        tag_end=cfg.localization.tag_end,
-                                        tag_max_retries=tagger_retries,
-                                    )
-                                    weave_debug.extend(dbg_frag)
-                            else:
-                                poisoned_ctx_core, shadow_ctx_core, weave_debug = apply_weave_with_shadow(
-                                    weaver,
-                                    ctx_for_weave,
-                                    ops_all,
-                                    task=task,
-                                    max_retries=weaver_retries,
-                                    prompt_template=weaver_prompt_fragment,
-                                    tag_chat=weaver,
-                                    tag_start=cfg.localization.tag_start,
-                                    tag_end=cfg.localization.tag_end,
-                                    tag_max_retries=tagger_retries,
-                                )
+                            poisoned_ctx_core, shadow_ctx_core, weave_debug = apply_weave_with_shadow(
+                                weaver,
+                                ctx_for_weave,
+                                ops_all,
+                                task=task,
+                                max_retries=weaver_retries,
+                                prompt_template=weaver_prompt_fragment,
+                                tag_chat=weaver,
+                                tag_start=cfg.localization.tag_start,
+                                tag_end=cfg.localization.tag_end,
+                                tag_max_retries=tagger_retries,
+                            )
                             poisoned_ctx = poisoned_ctx_core + guide_block
                             shadow_ctx = shadow_ctx_core + guide_shadow_block
                         else:
-                            if weave_strategy == "anchor_fragments" and is_web_task:
-                                anchor_ops = [op for op in ops_all if str(op.merge_with).lower().startswith("insert")]
-                                fragment_ops = [op for op in ops_all if op not in anchor_ops]
-                                poisoned_ctx_core = ctx_for_weave
-                                weave_debug = []
-                                if anchor_ops:
-                                    poisoned_ctx_core, dbg_anchor = apply_weave(
-                                        weaver,
-                                        poisoned_ctx_core,
-                                        anchor_ops,
-                                        task=task,
-                                        max_retries=weaver_retries,
-                                        prompt_template=weaver_prompt_anchor,
-                                    )
-                                    weave_debug.extend(dbg_anchor)
-                                if fragment_ops:
-                                    poisoned_ctx_core, dbg_frag = apply_weave(
-                                        weaver,
-                                        poisoned_ctx_core,
-                                        fragment_ops,
-                                        task=task,
-                                        max_retries=weaver_retries,
-                                        prompt_template=weaver_prompt_fragment,
-                                    )
-                                    weave_debug.extend(dbg_frag)
-                            else:
-                                poisoned_ctx_core, weave_debug = apply_weave(
-                                    weaver,
-                                    ctx_for_weave,
-                                    ops_all,
-                                    task=task,
-                                    max_retries=weaver_retries,
-                                    prompt_template=weaver_prompt_fragment,
-                                )
+                            poisoned_ctx_core, weave_debug = apply_weave(
+                                weaver,
+                                ctx_for_weave,
+                                ops_all,
+                                task=task,
+                                max_retries=weaver_retries,
+                                prompt_template=weaver_prompt_fragment,
+                            )
                             poisoned_ctx = poisoned_ctx_core + guide_block
 
                         prompt = cfg.prompt.target_template.format(context=poisoned_ctx, question=question)

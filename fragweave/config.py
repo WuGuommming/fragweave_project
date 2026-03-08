@@ -2,16 +2,37 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
 from pathlib import Path
+import os
+import warnings
 from typing import Any, Dict, Optional
 
 import yaml
 
 
-def _filter_dataclass_kwargs(dc_type, d: Dict[str, Any]) -> Dict[str, Any]:
-    """Keep only keys that are valid dataclass fields to avoid YAML/schema mismatch crashes."""
+def _filter_dataclass_kwargs(
+    dc_type,
+    d: Dict[str, Any],
+    *,
+    section: str,
+    strict: bool,
+) -> Dict[str, Any]:
+    """Validate section keys against dataclass fields.
+
+    By default, unknown keys raise ValueError to prevent silent config fallback.
+    Set FRAGWEAVE_CONFIG_STRICT=0 (or false/no/off) to downgrade unknown keys to warnings.
+    """
     if not isinstance(d, dict):
         return {}
     allowed = {f.name for f in fields(dc_type)}
+    unknown = sorted(k for k in d.keys() if k not in allowed)
+    if unknown:
+        msg = (
+            f"Unknown keys in config section '{section}': {unknown}. "
+            f"Allowed keys: {sorted(allowed)}"
+        )
+        if strict:
+            raise ValueError(msg)
+        warnings.warn(msg, stacklevel=2)
     return {k: v for k, v in d.items() if k in allowed}
 
 
@@ -151,29 +172,39 @@ def load_config(path: str | Path) -> RunConfig:
     p = Path(path)
     cfg_dict: Dict[str, Any] = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
 
-    def _mc(d: Dict[str, Any]) -> ModelConfig:
-        if not isinstance(d, dict):
-            raise TypeError("Model config must be a dict.")
-        return ModelConfig(**_filter_dataclass_kwargs(ModelConfig, d))
+    strict_env = os.getenv("FRAGWEAVE_CONFIG_STRICT", "1").strip().lower()
+    strict_cfg = strict_env not in {"0", "false", "no", "off"}
 
-    dataset = DatasetConfig(**_filter_dataclass_kwargs(DatasetConfig, cfg_dict.get("dataset", {})))
-    attack = AttackConfig(**_filter_dataclass_kwargs(AttackConfig, cfg_dict.get("attack", {})))
-    prompt = PromptConfig(**_filter_dataclass_kwargs(PromptConfig, cfg_dict.get("prompt", {})))
-    output = OutputConfig(**_filter_dataclass_kwargs(OutputConfig, cfg_dict.get("output", {})))
-    localization = LocalizationConfig(**_filter_dataclass_kwargs(LocalizationConfig, cfg_dict.get("localization", {})))
-    sanitization = SanitizationConfig(**_filter_dataclass_kwargs(SanitizationConfig, cfg_dict.get("sanitization", {})))
+
+
+    dataset = DatasetConfig(**_filter_dataclass_kwargs(DatasetConfig, cfg_dict.get("dataset", {}), section="dataset", strict=strict_cfg))
+    attack = AttackConfig(**_filter_dataclass_kwargs(AttackConfig, cfg_dict.get("attack", {}), section="attack", strict=strict_cfg))
+    prompt = PromptConfig(**_filter_dataclass_kwargs(PromptConfig, cfg_dict.get("prompt", {}), section="prompt", strict=strict_cfg))
+    output = OutputConfig(**_filter_dataclass_kwargs(OutputConfig, cfg_dict.get("output", {}), section="output", strict=strict_cfg))
+    localization = LocalizationConfig(**_filter_dataclass_kwargs(LocalizationConfig, cfg_dict.get("localization", {}), section="localization", strict=strict_cfg))
+    sanitization = SanitizationConfig(**_filter_dataclass_kwargs(SanitizationConfig, cfg_dict.get("sanitization", {}), section="sanitization", strict=strict_cfg))
 
     models = cfg_dict.get("models", {})
+    if not isinstance(models, dict):
+        raise TypeError("config section 'models' must be a dict")
     if "target" not in models:
         raise ValueError("config missing required section: models.target")
 
-    target_model = _mc(models["target"])
-    sharder_model = _mc(models.get("sharder", models["target"]))
-    weaver_model = _mc(models.get("weaver", models["target"]))
-    judge_model = _mc(models.get("judge", models["target"]))
+    target_model = ModelConfig(**_filter_dataclass_kwargs(ModelConfig, models["target"], section="models.target", strict=strict_cfg))
+    sharder_model = ModelConfig(**_filter_dataclass_kwargs(ModelConfig, models.get("sharder", models["target"]), section="models.sharder", strict=strict_cfg))
+    weaver_model = ModelConfig(**_filter_dataclass_kwargs(ModelConfig, models.get("weaver", models["target"]), section="models.weaver", strict=strict_cfg))
+    judge_model = ModelConfig(**_filter_dataclass_kwargs(ModelConfig, models.get("judge", models["target"]), section="models.judge", strict=strict_cfg))
 
-    detector_model = _mc(models["detector"]) if "detector" in models else None
-    sanitizer_model = _mc(models["sanitizer"]) if "sanitizer" in models else None
+    detector_model = (
+        ModelConfig(**_filter_dataclass_kwargs(ModelConfig, models["detector"], section="models.detector", strict=strict_cfg))
+        if "detector" in models
+        else None
+    )
+    sanitizer_model = (
+        ModelConfig(**_filter_dataclass_kwargs(ModelConfig, models["sanitizer"], section="models.sanitizer", strict=strict_cfg))
+        if "sanitizer" in models
+        else None
+    )
 
     return RunConfig(
         dataset=dataset,
