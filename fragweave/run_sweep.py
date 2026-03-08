@@ -223,9 +223,11 @@ def choose_random_ops(
     ops: List[WeaveOp] = []
     n = len(meta)
     available = [i for i in range(n) if int(meta[i]["global_index"]) not in exclude_sent_indices]
+
     task_low = (task or "").lower()
     email_like = task_low in {"email_qa", "emailqa", "email"}
     used_globals: List[int] = []
+
 
     for s in items:
         if available:
@@ -244,7 +246,9 @@ def choose_random_ops(
         gidx = int(meta[idx]["global_index"])
         used_globals.append(gidx)
         merge_with = rng.choice(["prev", "next"])
+
         ops.append(WeaveOp(shard=s, sent_index=gidx, merge_with=merge_with))
+
     return ops, ctx2
 
 
