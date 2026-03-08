@@ -159,22 +159,24 @@ def enumerate_weavable_sentences(
     for si in nl_indices:
         _leading_ws, sents, _seps = _split_sentences_with_seps(segs[si].text)
         for sj, sent in enumerate(sents):
+            cur = g
+            g += 1
             if not sent.strip():
                 continue
             if _looks_like_footer_or_meta(task, sent):
                 continue
-            out.append({"global_index": g, "seg_idx": si, "sent_idx": sj, "sentence": sent})
-            g += 1
+            out.append({"global_index": cur, "seg_idx": si, "sent_idx": sj, "sentence": sent})
 
     if not out:
         g = 0
         for si in nl_indices:
             _leading_ws, sents, _seps = _split_sentences_with_seps(segs[si].text)
             for sj, sent in enumerate(sents):
+                cur = g
+                g += 1
                 if not sent.strip():
                     continue
-                out.append({"global_index": g, "seg_idx": si, "sent_idx": sj, "sentence": sent})
-                g += 1
+                out.append({"global_index": cur, "seg_idx": si, "sent_idx": sj, "sentence": sent})
 
     return out, context
 

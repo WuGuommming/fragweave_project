@@ -214,15 +214,15 @@ def choose_random_ops(
     carrier_line: Optional[str] = None,
     exclude_sent_indices: Optional[Set[int]] = None,
 ) -> Tuple[List[WeaveOp], str]:
+    """Choose random ops; exclude_sent_indices and sent_index are global_index-based."""
     exclude_sent_indices = exclude_sent_indices or set()
     meta, ctx2 = enumerate_weavable_sentences(task, context, carrier_line=carrier_line)
-    sents = [m["sentence"] for m in meta]
-    if not sents:
+    if not meta:
         return [WeaveOp(shard=s, sent_index=0, merge_with="next") for s in items], ctx2
 
     ops: List[WeaveOp] = []
-    n = len(sents)
-    available = [i for i in range(n) if i not in exclude_sent_indices]
+    n = len(meta)
+    available = [i for i in range(n) if int(meta[i]["global_index"]) not in exclude_sent_indices]
 
     for s in items:
         if available:
@@ -232,7 +232,7 @@ def choose_random_ops(
         else:
             idx = rng.randint(0, n - 1)
         merge_with = rng.choice(["prev", "next"])
-        ops.append(WeaveOp(shard=s, sent_index=idx, merge_with=merge_with))
+        ops.append(WeaveOp(shard=s, sent_index=int(meta[idx]["global_index"]), merge_with=merge_with))
     return ops, ctx2
 
 
@@ -545,18 +545,43 @@ def _load_samples_any_task(
     )
 
 
-def _direct_inject(context: str, malicious: str) -> str:
+def _inject_standalone_block(context: str, block: str, mode: str = "append_standalone") -> str:
+    body = context.rstrip()
+    m = str(mode or "append_standalone").lower()
+    if m == "prepend_standalone":
+        return block + "\n\n" + body if body else block
+    if m == "insert_standalone_mid":
+        if not body:
+            return block
+        paras = [x for x in re.split(r"\n\n+", body) if x.strip()]
+        if not paras:
+            return block + "\n\n" + body
+        mid = len(paras) // 2
+        mixed = paras[:mid] + [block] + paras[mid:]
+        return "\n\n".join(mixed)
+    return body + "\n\n" + block + "\n"
+
+
+def _direct_inject(context: str, malicious: str, mode: str = "append_standalone") -> str:
     m = malicious.strip()
     if not m:
         return context
-    return context.rstrip() + "\n\n[INSTRUCTION]: " + m + "\n"
+    block = "[INSTRUCTION]: " + m
+    return _inject_standalone_block(context, block, mode=mode)
 
 
-def _direct_inject_shadow(context: str, malicious: str, tag_start: str, tag_end: str) -> str:
+def _direct_inject_shadow(
+    context: str,
+    malicious: str,
+    tag_start: str,
+    tag_end: str,
+    mode: str = "append_standalone",
+) -> str:
     m = malicious.strip()
     if not m:
         return context
-    return context.rstrip() + "\n\n[INSTRUCTION]: " + tag_start + m + tag_end + "\n"
+    block = "[INSTRUCTION]: " + tag_start + m + tag_end
+    return _inject_standalone_block(context, block, mode=mode)
 
 
 def _call_sanitize_context(
@@ -805,8 +830,16 @@ def main() -> None:
 
     cfg = load_config(args.config)
 
+    resolved_cfg = {
+        "weave_strategy": str(getattr(cfg.attack, "weave_strategy", "auto")).lower(),
+        "baseline_injection_mode": str(getattr(cfg.dataset, "baseline_injection_mode", "append_standalone")).lower(),
+        "custom_detector_prompt": bool(getattr(cfg.localization, "prompt_template", None)),
+    }
+    print(f"[Config] {json.dumps(resolved_cfg, ensure_ascii=False)}")
+
     out_dir = Path(cfg.output.out_dir) / cfg.output.run_name
     out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "config_resolved.json").write_text(json.dumps(resolved_cfg, ensure_ascii=False, indent=2), encoding="utf-8")
 
     bipia_root = ensure_bipia_repo(cfg.dataset.bipia_root)
 
@@ -853,6 +886,7 @@ def main() -> None:
     tagger_retries = int(getattr(cfg.attack, "tagger_retries", 2))
 
     include_direct_baseline = bool(getattr(cfg.attack, "include_direct_baseline", True))
+    baseline_injection_mode = str(getattr(cfg.dataset, "baseline_injection_mode", "append_standalone")).lower()
     enable_decoy = bool(getattr(cfg.attack, "enable_decoy", True))
     guide_versions = list(getattr(cfg.attack, "guide_versions", ("A", "B")))
     preserve_structure = bool(getattr(cfg.attack, "preserve_structure", True))
@@ -1164,12 +1198,13 @@ def main() -> None:
                         # Direct baseline
                         # -----------------------
                         if include_direct_baseline:
-                            base_ctx = _direct_inject(context, malicious)
+                            base_ctx = _direct_inject(context, malicious, mode=baseline_injection_mode)
                             base_shadow = _direct_inject_shadow(
                                 context,
                                 malicious,
                                 cfg.localization.tag_start,
                                 cfg.localization.tag_end,
+                                mode=baseline_injection_mode,
                             )
 
                             base_prompt = cfg.prompt.target_template.format(context=base_ctx, question=question)
