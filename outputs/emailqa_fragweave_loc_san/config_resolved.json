@@ -1,0 +1,5 @@
+{
+  "weave_strategy": "auto",
+  "baseline_injection_mode": "append_standalone",
+  "custom_detector_prompt": false
+}
