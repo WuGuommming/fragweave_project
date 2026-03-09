@@ -1,0 +1,17 @@
+{
+  "n_pairs": 20,
+  "n_points": 60,
+  "feature_dim": 3584,
+  "distance_baseline_to_original": 79.28309631347656,
+  "distance_fragweave_to_original": 118.50702667236328,
+  "fragweave_minus_baseline_distance": 39.22393035888672,
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 20,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "elapsed_seconds": 21.226833757013083
+}

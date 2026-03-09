@@ -1,0 +1,15 @@
+{
+  "n_pairs": 20,
+  "n_layers": 29,
+  "baseline_overall_mean_distance": 35.6287841796875,
+  "fragweave_overall_mean_distance": 44.46830368041992,
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 20,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "elapsed_seconds": 21.300450898706913
+}

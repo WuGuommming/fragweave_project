@@ -1,0 +1,24 @@
+{
+  "n_pairs": 20,
+  "method": "grad_x_input",
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 20,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "target_source_counts": {
+    "target_response": 20,
+    "malicious_instruction": 0,
+    "fallback": 0
+  },
+  "char_alignment_mode_counts": {
+    "offset_mapping": 40,
+    "approximate": 0
+  },
+  "baseline_injection_like_mean": 0.058467655738637804,
+  "fragweave_injection_like_mean": 0.03191386526569631,
+  "elapsed_seconds": 35.408093187958
+}

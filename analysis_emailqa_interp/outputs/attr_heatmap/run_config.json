@@ -1,0 +1,9 @@
+{
+  "debug_jsonl": "outputs/emailqa_fragweave_loc_san/debug_fragments_12.jsonl",
+  "config": "configs/emailqa_with_localization_and_sanitization.yaml",
+  "variant_id": "k3_refs1_guideA",
+  "max_pairs": 20,
+  "seed": 2026,
+  "method": "grad_x_input",
+  "out_dir": "analysis_emailqa_interp/outputs/attr_heatmap"
+}
