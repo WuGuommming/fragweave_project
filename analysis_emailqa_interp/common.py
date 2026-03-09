@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+import re
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Tuple
 
 import numpy as np
 import torch
@@ -46,6 +47,23 @@ class PairingDiagnostics:
             return "no variants found in debug file"
         top = sorted(self.variant_counts.items(), key=lambda x: (-x[1], x[0]))[:top_k]
         return ", ".join(f"{k}({v})" for k, v in top)
+
+
+@dataclass
+class PairModeDiagnostics:
+    mode: Literal["all_pairs", "success_only"]
+    rule: str
+    total_pairs: int
+    baseline_pairs: int
+    fragweave_pairs: int
+
+
+def _to_string_list(v: Any) -> List[str]:
+    if isinstance(v, list):
+        return [str(x).strip() for x in v if str(x).strip()]
+    if isinstance(v, str) and v.strip():
+        return [v.strip()]
+    return []
 
 
 
@@ -194,6 +212,116 @@ def pair_rows(
 
 def build_prompt(template: str, context: str, question: str) -> str:
     return template.format(context=context, question=question)
+
+
+def sentence_spans(text: str) -> List[Tuple[int, int]]:
+    out: List[Tuple[int, int]] = []
+    start = 0
+    for m in re.finditer(r"[.!?]\s+", text):
+        end = m.end()
+        out.append((start, end))
+        start = end
+    if start < len(text):
+        out.append((start, len(text)))
+    return [x for x in out if x[1] - x[0] > 16]
+
+
+def select_benign_carrier_text(baseline_context: str, fragweave_context: str) -> str:
+    base_sentences = sentence_spans(baseline_context)
+    frag_sentences = sentence_spans(fragweave_context)
+    if base_sentences:
+        st, ed = base_sentences[min(1, len(base_sentences) - 1)]
+        return baseline_context[st:ed]
+    if frag_sentences:
+        st, ed = frag_sentences[min(1, len(frag_sentences) - 1)]
+        return fragweave_context[st:ed]
+    return ""
+
+
+def row_attack_succeeded(row: Dict[str, Any]) -> bool:
+    direct_keys = ("attack_succeeded", "is_attack_success", "success")
+    for key in direct_keys:
+        val = row.get(key)
+        if isinstance(val, bool):
+            return val
+
+    judge = row.get("attack_judge")
+    if isinstance(judge, dict):
+        for key in ("attack_succeeded", "success"):
+            val = judge.get(key)
+            if isinstance(val, bool):
+                return val
+
+        raw = judge.get("raw")
+        if isinstance(raw, str) and raw.strip():
+            try:
+                parsed = json.loads(raw)
+                for key in ("attack_succeeded", "success"):
+                    val = parsed.get(key)
+                    if isinstance(val, bool):
+                        return val
+            except json.JSONDecodeError:
+                pass
+
+        ok = judge.get("ok")
+        if isinstance(ok, bool):
+            return ok
+    return False
+
+
+def attack_anchor_texts(row: Dict[str, Any]) -> List[str]:
+    anchors: List[str] = []
+    anchors.extend(_to_string_list(row.get("shards")))
+    anchors.extend(_to_string_list(row.get("guidance")))
+
+    loc_debug = row.get("loc_debug")
+    if isinstance(loc_debug, dict):
+        anchors.extend(_to_string_list(loc_debug.get("snippets")))
+
+    if not anchors:
+        anchors.extend(_to_string_list(row.get("malicious_instruction")))
+
+    seen = set()
+    deduped: List[str] = []
+    for text in anchors:
+        if text not in seen:
+            seen.add(text)
+            deduped.append(text)
+    return deduped
+
+
+def split_pairs_by_mode(
+    pairs: List[PairedSample],
+    mode: Literal["all_pairs", "success_only"],
+) -> Tuple[List[PairedSample], List[PairedSample], PairModeDiagnostics]:
+    if mode == "all_pairs":
+        return (
+            pairs,
+            pairs,
+            PairModeDiagnostics(
+                mode=mode,
+                rule="No success filter; use paired samples after variant/context checks.",
+                total_pairs=len(pairs),
+                baseline_pairs=len(pairs),
+                fragweave_pairs=len(pairs),
+            ),
+        )
+
+    intersection_pairs = [p for p in pairs if row_attack_succeeded(p.baseline_row) and row_attack_succeeded(p.fragweave_row)]
+    return (
+        intersection_pairs,
+        intersection_pairs,
+        PairModeDiagnostics(
+            mode=mode,
+            rule=(
+                "Paired intersection success-only: keep samples where both baseline_row and "
+                "fragweave_row are attack-successful."
+            ),
+            total_pairs=len(pairs),
+            baseline_pairs=len(intersection_pairs),
+            fragweave_pairs=len(intersection_pairs),
+        ),
+    )
 
 
 def load_analysis_stack(config_path: str | Path) -> Tuple[RunConfig, HFChat]:

@@ -28,6 +28,7 @@ from analysis_emailqa_interp.common import (
     read_jsonl,
     save_run_config,
     set_seed,
+    split_pairs_by_mode,
     token_char_spans,
 )
 
@@ -39,6 +40,7 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--variant-id", default=DEFAULT_VARIANT_ID)
     ap.add_argument("--max-pairs", type=int, default=DEFAULT_MAX_PAIRED)
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    ap.add_argument("--mode", choices=["all_pairs", "success_only", "both"], default="both")
     ap.add_argument("--tail-tokens", type=int, default=8)
     ap.add_argument("--out-dir", default="analysis_emailqa_interp/outputs/attention_viz")
     return ap.parse_args()
@@ -116,82 +118,116 @@ def main() -> None:
         )
     cfg, chat = load_analysis_stack(args.config)
 
-    base_scores: List[np.ndarray] = []
-    fw_scores: List[np.ndarray] = []
-    base_sections: List[Dict[str, float]] = []
-    fw_sections: List[Dict[str, float]] = []
-    alignment_modes = {"offset_mapping": 0, "approximate": 0}
+    run_modes = ["all_pairs", "success_only"] if args.mode == "both" else [args.mode]
+    for mode in run_modes:
+        baseline_pairs, fragweave_pairs, mode_diag = split_pairs_by_mode(pairs, mode)
+        if mode == "success_only" and (mode_diag.baseline_pairs <= 2 or mode_diag.fragweave_pairs <= 2):
+            raise RuntimeError(
+                "success_only mode requires >2 samples per side; "
+                f"got baseline={mode_diag.baseline_pairs}, fragweave={mode_diag.fragweave_pairs}."
+            )
 
-    for pair in tqdm(pairs, desc="Attention pairs", unit="pair"):
-        p_b = build_prompt(cfg.prompt.target_template, pair.baseline_context, pair.question)
-        p_f = build_prompt(cfg.prompt.target_template, pair.fragweave_context, pair.question)
-        b = summarize_prompt_tail_attention(chat, p_b, tail_tokens=args.tail_tokens)
-        f = summarize_prompt_tail_attention(chat, p_f, tail_tokens=args.tail_tokens)
+        base_scores: List[np.ndarray] = []
+        fw_scores: List[np.ndarray] = []
+        base_sections: List[Dict[str, float]] = []
+        fw_sections: List[Dict[str, float]] = []
+        alignment_modes = {"offset_mapping": 0, "approximate": 0}
 
-        base_scores.append(np.asarray(b["prompt_tail_to_input_attention"]))
-        fw_scores.append(np.asarray(f["prompt_tail_to_input_attention"]))
-        base_sections.append(section_vector(str(b["prompt_text"]), np.asarray(b["token_spans"]), np.asarray(b["prompt_tail_to_input_attention"]), pair.baseline_row))
-        fw_sections.append(section_vector(str(f["prompt_text"]), np.asarray(f["token_spans"]), np.asarray(f["prompt_tail_to_input_attention"]), pair.fragweave_row))
-        alignment_modes[str(b["char_alignment_mode"])] = alignment_modes.get(str(b["char_alignment_mode"]), 0) + 1
-        alignment_modes[str(f["char_alignment_mode"])] = alignment_modes.get(str(f["char_alignment_mode"]), 0) + 1
+        for pair in tqdm(baseline_pairs, desc=f"Attention pairs ({mode} baseline)", unit="pair"):
+            p_b = build_prompt(cfg.prompt.target_template, pair.baseline_context, pair.question)
+            b = summarize_prompt_tail_attention(chat, p_b, tail_tokens=args.tail_tokens)
+            base_scores.append(np.asarray(b["prompt_tail_to_input_attention"]))
+            base_sections.append(
+                section_vector(
+                    str(b["prompt_text"]),
+                    np.asarray(b["token_spans"]),
+                    np.asarray(b["prompt_tail_to_input_attention"]),
+                    pair.baseline_row,
+                )
+            )
+            alignment_modes[str(b["char_alignment_mode"])] = alignment_modes.get(str(b["char_alignment_mode"]), 0) + 1
 
-    min_len = min(min(len(x) for x in base_scores), min(len(x) for x in fw_scores))
-    base_trim = np.stack([x[:min_len] for x in base_scores])
-    fw_trim = np.stack([x[:min_len] for x in fw_scores])
+        for pair in tqdm(fragweave_pairs, desc=f"Attention pairs ({mode} fragweave)", unit="pair"):
+            p_f = build_prompt(cfg.prompt.target_template, pair.fragweave_context, pair.question)
+            f = summarize_prompt_tail_attention(chat, p_f, tail_tokens=args.tail_tokens)
+            fw_scores.append(np.asarray(f["prompt_tail_to_input_attention"]))
+            fw_sections.append(
+                section_vector(
+                    str(f["prompt_text"]),
+                    np.asarray(f["token_spans"]),
+                    np.asarray(f["prompt_tail_to_input_attention"]),
+                    pair.fragweave_row,
+                )
+            )
+            alignment_modes[str(f["char_alignment_mode"])] = alignment_modes.get(str(f["char_alignment_mode"]), 0) + 1
 
-    np.save(out_dir / "prompt_attention_summary_baseline.npy", base_trim)
-    np.save(out_dir / "prompt_attention_summary_fragweave.npy", fw_trim)
+        min_len = min(min(len(x) for x in base_scores), min(len(x) for x in fw_scores))
+        base_trim = np.stack([x[:min_len] for x in base_scores])
+        fw_trim = np.stack([x[:min_len] for x in fw_scores])
 
-    labels = ["main_context", "question", "injection_like", "other"]
-    base_vec = np.array([np.mean([x[l] for x in base_sections]) for l in labels])
-    fw_vec = np.array([np.mean([x[l] for x in fw_sections]) for l in labels])
+        np.save(out_dir / f"prompt_attention_summary_baseline_{mode}.npy", base_trim)
+        np.save(out_dir / f"prompt_attention_summary_fragweave_{mode}.npy", fw_trim)
 
-    fig, ax = plt.subplots(figsize=(8, 4))
-    x = np.arange(len(labels))
-    w = 0.35
-    ax.bar(x - w / 2, base_vec, width=w, label="baseline")
-    ax.bar(x + w / 2, fw_vec, width=w, label="fragweave")
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=25, ha="right")
-    ax.set_ylabel("Normalized attention mass")
-    ax.set_title("Prompt attention by section")
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(out_dir / "section_attention_barplot.png", dpi=180)
-    plt.close(fig)
+        labels = ["main_context", "question", "injection_like", "other"]
+        base_vec = np.array([np.mean([x[l] for x in base_sections]) for l in labels])
+        fw_vec = np.array([np.mean([x[l] for x in fw_sections]) for l in labels])
 
-    mat = np.stack([base_vec, fw_vec])
-    fig, ax = plt.subplots(figsize=(5, 3))
-    im = ax.imshow(mat, aspect="auto", cmap="Blues")
-    ax.set_yticks([0, 1])
-    ax.set_yticklabels(["baseline", "fragweave"])
-    ax.set_xticks(range(len(labels)))
-    ax.set_xticklabels(labels, rotation=25, ha="right")
-    ax.set_title("Prompt-side attention by prompt section")
-    fig.colorbar(im, ax=ax)
-    fig.tight_layout()
-    fig.savefig(out_dir / "section_attention_heatmap.png", dpi=180)
-    plt.close(fig)
+        mode_label = "All Pairs" if mode == "all_pairs" else "Success-Only"
+        fig, ax = plt.subplots(figsize=(8, 4))
+        x = np.arange(len(labels))
+        w = 0.35
+        ax.bar(x - w / 2, base_vec, width=w, label="baseline")
+        ax.bar(x + w / 2, fw_vec, width=w, label="fragweave")
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=25, ha="right")
+        ax.set_ylabel("Normalized attention mass")
+        ax.set_title(f"Prompt attention by section ({mode_label})")
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(out_dir / f"section_attention_barplot_{mode}.png", dpi=180)
+        plt.close(fig)
 
-    elapsed_s = time.perf_counter() - start
-    stats = {
-        "n_pairs": len(pairs),
-        "tail_prompt_tokens": args.tail_tokens,
-        "pairing_diagnostics": {
-            "rows_seen_for_variant": diag.rows_seen_for_variant,
-            "grouped_sample_ids": diag.grouped_sample_ids,
-            "complete_pairs": diag.complete_pairs,
-            "used_pairs": diag.used_pairs,
-            "skipped_missing_fields": diag.skipped_missing_fields,
-            "variant_hint": diag.short_variant_hint(),
-        },
-        "char_alignment_mode_counts": alignment_modes,
-        "baseline_main_context_prompt_attention": float(base_vec[0]),
-        "fragweave_main_context_prompt_attention": float(fw_vec[0]),
-        "elapsed_seconds": elapsed_s,
-    }
-    (out_dir / "attention_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    log_line(out_dir, f"Done: n_pairs={len(pairs)} tail_prompt_tokens={args.tail_tokens} elapsed_seconds={elapsed_s:.2f}")
+        mat = np.stack([base_vec, fw_vec])
+        fig, ax = plt.subplots(figsize=(5, 3))
+        im = ax.imshow(mat, aspect="auto", cmap="Blues")
+        ax.set_yticks([0, 1])
+        ax.set_yticklabels(["baseline", "fragweave"])
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(labels, rotation=25, ha="right")
+        ax.set_title(f"Prompt-side attention by prompt section ({mode_label})")
+        fig.colorbar(im, ax=ax)
+        fig.tight_layout()
+        fig.savefig(out_dir / f"section_attention_heatmap_{mode}.png", dpi=180)
+        plt.close(fig)
+
+        elapsed_s = time.perf_counter() - start
+        stats = {
+            "mode": mode,
+            "mode_label": mode_label,
+            "mode_rule": mode_diag.rule,
+            "n_pairs_total": mode_diag.total_pairs,
+            "n_pairs_baseline": mode_diag.baseline_pairs,
+            "n_pairs_fragweave": mode_diag.fragweave_pairs,
+            "tail_prompt_tokens": args.tail_tokens,
+            "pairing_diagnostics": {
+                "rows_seen_for_variant": diag.rows_seen_for_variant,
+                "grouped_sample_ids": diag.grouped_sample_ids,
+                "complete_pairs": diag.complete_pairs,
+                "used_pairs": diag.used_pairs,
+                "skipped_missing_fields": diag.skipped_missing_fields,
+                "variant_hint": diag.short_variant_hint(),
+            },
+            "char_alignment_mode_counts": alignment_modes,
+            "baseline_main_context_prompt_attention": float(base_vec[0]),
+            "fragweave_main_context_prompt_attention": float(fw_vec[0]),
+            "elapsed_seconds": elapsed_s,
+        }
+        (out_dir / f"attention_stats_{mode}.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
+        log_line(
+            out_dir,
+            f"Done: mode={mode} baseline_pairs={mode_diag.baseline_pairs} "
+            f"fragweave_pairs={mode_diag.fragweave_pairs} elapsed_seconds={elapsed_s:.2f}",
+        )
 
 
 if __name__ == "__main__":
