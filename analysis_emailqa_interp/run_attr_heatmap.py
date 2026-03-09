@@ -28,7 +28,9 @@ from analysis_emailqa_interp.common import (
     pair_rows_with_diagnostics,
     read_jsonl,
     save_run_config,
+    select_benign_carrier_text,
     set_seed,
+    split_pairs_by_mode,
     token_char_spans,
 )
 
@@ -40,6 +42,7 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--variant-id", default=DEFAULT_VARIANT_ID)
     ap.add_argument("--max-pairs", type=int, default=DEFAULT_MAX_PAIRED)
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    ap.add_argument("--mode", choices=["all_pairs", "success_only", "both"], default="both")
     ap.add_argument("--method", choices=["grad_x_input", "integrated_gradients"], default="grad_x_input")
     ap.add_argument("--token-examples", type=int, default=0)
     ap.add_argument("--out-dir", default="analysis_emailqa_interp/outputs/attr_heatmap")
@@ -90,6 +93,38 @@ def region_summary(prompt_text: str, token_spans: List[Tuple[int, int]], attr: n
             label = "question"
         elif "main_context" in sections and st >= sections["main_context"][0] and ed <= sections["main_context"][1]:
             label = "main_context"
+        out[label] += val
+
+    total = sum(out.values()) + 1e-12
+    return {k: v / total for k, v in out.items()}
+
+
+def span_summary(
+    prompt_text: str,
+    token_spans: List[Tuple[int, int]],
+    attr: np.ndarray,
+    row: Dict,
+    benign_carrier_text: str,
+) -> Dict[str, float]:
+    baseline_inj_span = locate_span(prompt_text, str(row.get("malicious_instruction") or ""))
+    woven_spans = [locate_span(prompt_text, str(s)) for s in (row.get("shards") or [])]
+    carrier_span = locate_span(prompt_text, benign_carrier_text)
+
+    out = {
+        "baseline_injection_span": 0.0,
+        "fragweave_woven_span": 0.0,
+        "benign_carrier_span": 0.0,
+        "other": 0.0,
+    }
+    for i, (st, ed) in enumerate(token_spans):
+        val = float(attr[i])
+        label = "other"
+        if baseline_inj_span and st >= baseline_inj_span[0] and ed <= baseline_inj_span[1]:
+            label = "baseline_injection_span"
+        elif any(span and st >= span[0] and ed <= span[1] for span in woven_spans):
+            label = "fragweave_woven_span"
+        elif carrier_span and st >= carrier_span[0] and ed <= carrier_span[1]:
+            label = "benign_carrier_span"
         out[label] += val
 
     total = sum(out.values()) + 1e-12
@@ -155,148 +190,244 @@ def main() -> None:
         )
     cfg, chat = load_analysis_stack(args.config)
 
-    base_dump: List[Dict] = []
-    fw_dump: List[Dict] = []
-    span_rows: List[Dict] = []
-    target_source_counts = {"target_response": 0, "malicious_instruction": 0, "fallback": 0}
-    alignment_modes = {"offset_mapping": 0, "approximate": 0}
-
-    for i, pair in enumerate(tqdm(pairs, desc="Attribution pairs", unit="pair")):
-        target, target_source = choose_target_text(pair)
-        target_source_counts[target_source] += 1
-
-        base_prompt = build_prompt(cfg.prompt.target_template, pair.baseline_context, pair.question)
-        fw_prompt = build_prompt(cfg.prompt.target_template, pair.fragweave_context, pair.question)
-
-        b_attr = chat.compute_input_attribution(base_prompt, target, method=args.method)
-        f_attr = chat.compute_input_attribution(fw_prompt, target, method=args.method)
-
-        b_ids = b_attr["input_ids"][0].tolist()
-        f_ids = f_attr["input_ids"][0].tolist()
-        b_text, b_spans, b_alignment = token_char_spans(chat.tokenizer, b_ids)
-        f_text, f_spans, f_alignment = token_char_spans(chat.tokenizer, f_ids)
-        alignment_modes[b_alignment] = alignment_modes.get(b_alignment, 0) + 1
-        alignment_modes[f_alignment] = alignment_modes.get(f_alignment, 0) + 1
-
-        b_norm = normalize_attr(np.asarray(b_attr["token_attribution"].tolist(), dtype=np.float32))
-        f_norm = normalize_attr(np.asarray(f_attr["token_attribution"].tolist(), dtype=np.float32))
-
-        b_regions = region_summary(b_text, b_spans, b_norm, pair.baseline_row)
-        f_regions = region_summary(f_text, f_spans, f_norm, pair.fragweave_row)
-
-        base_dump.append(
-            {
-                "sample_id": pair.sample_id,
-                "tokens": b_attr["token_text"],
-                "attr": b_norm.tolist(),
-                "target_text": target,
-                "target_source": target_source,
-                "char_alignment_mode": b_alignment,
-            }
-        )
-        fw_dump.append(
-            {
-                "sample_id": pair.sample_id,
-                "tokens": f_attr["token_text"],
-                "attr": f_norm.tolist(),
-                "target_text": target,
-                "target_source": target_source,
-                "char_alignment_mode": f_alignment,
-            }
-        )
-
-        row = {"sample_id": pair.sample_id, "target_source": target_source}
-        for k in sorted(set(b_regions) | set(f_regions)):
-            row[f"baseline_{k}"] = b_regions.get(k, 0.0)
-            row[f"fragweave_{k}"] = f_regions.get(k, 0.0)
-        span_rows.append(row)
-
-        if i < args.token_examples:
-            plot_example(
-                out_dir / f"heatmap_token_example_{pair.sample_id}_baseline.png",
-                b_attr["token_text"],
-                b_norm,
-                f"Baseline token attribution ({pair.sample_id})",
-            )
-            plot_example(
-                out_dir / f"heatmap_token_example_{pair.sample_id}_fragweave.png",
-                f_attr["token_text"],
-                f_norm,
-                f"FragWeave token attribution ({pair.sample_id})",
+    run_modes = ["all_pairs", "success_only"] if args.mode == "both" else [args.mode]
+    for mode in run_modes:
+        baseline_pairs, fragweave_pairs, mode_diag = split_pairs_by_mode(pairs, mode)
+        if mode == "success_only" and (mode_diag.baseline_pairs <= 2 or mode_diag.fragweave_pairs <= 2):
+            raise RuntimeError(
+                "success_only mode requires >2 samples per side; "
+                f"got baseline={mode_diag.baseline_pairs}, fragweave={mode_diag.fragweave_pairs}."
             )
 
-    save_token_lines(out_dir / "attribution_tokens_baseline.jsonl", base_dump)
-    save_token_lines(out_dir / "attribution_tokens_fragweave.jsonl", fw_dump)
+        base_dump: List[Dict] = []
+        fw_dump: List[Dict] = []
+        section_rows: List[Dict] = []
+        span_rows: List[Dict] = []
+        target_source_counts = {"target_response": 0, "malicious_instruction": 0, "fallback": 0}
+        alignment_modes = {"offset_mapping": 0, "approximate": 0}
 
-    keys = sorted(k for k in span_rows[0].keys() if k != "sample_id")
-    with (out_dir / "span_attr_summary.csv").open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=["sample_id", *keys])
-        writer.writeheader()
-        writer.writerows(span_rows)
+        for i, pair in enumerate(tqdm(baseline_pairs, desc=f"Attribution pairs ({mode} baseline)", unit="pair")):
+            target, target_source = choose_target_text(pair)
+            target_source_counts[target_source] += 1
+            base_prompt = build_prompt(cfg.prompt.target_template, pair.baseline_context, pair.question)
+            b_attr = chat.compute_input_attribution(base_prompt, target, method=args.method)
+            b_ids = b_attr["input_ids"][0].tolist()
+            b_text, b_spans, b_alignment = token_char_spans(chat.tokenizer, b_ids)
+            alignment_modes[b_alignment] = alignment_modes.get(b_alignment, 0) + 1
+            b_norm = normalize_attr(np.asarray(b_attr["token_attribution"].tolist(), dtype=np.float32))
+            b_regions = region_summary(b_text, b_spans, b_norm, pair.baseline_row)
+            benign_carrier_text = select_benign_carrier_text(pair.baseline_context, pair.fragweave_context)
+            b_span_regions = span_summary(b_text, b_spans, b_norm, pair.baseline_row, benign_carrier_text)
 
-    baseline_cols = [k for k in keys if k.startswith("baseline_")]
-    frag_cols = [k for k in keys if k.startswith("fragweave_")]
-    base_mean = np.array([np.mean([r[k] for r in span_rows]) for k in baseline_cols])
-    fw_mean = np.array([np.mean([r[k] for r in span_rows]) for k in frag_cols])
-    labels = [k.replace("baseline_", "") for k in baseline_cols]
+            base_dump.append(
+                {
+                    "sample_id": pair.sample_id,
+                    "tokens": b_attr["token_text"],
+                    "attr": b_norm.tolist(),
+                    "target_text": target,
+                    "target_source": target_source,
+                    "char_alignment_mode": b_alignment,
+                    "mode": mode,
+                }
+            )
+            section_rows.append(
+                {
+                    "sample_id": pair.sample_id,
+                    "target_source": target_source,
+                    **{f"baseline_{k}": b_regions.get(k, 0.0) for k in b_regions},
+                }
+            )
+            span_rows.append(
+                {
+                    "sample_id": pair.sample_id,
+                    "target_source": target_source,
+                    **{f"baseline_{k}": b_span_regions.get(k, 0.0) for k in b_span_regions},
+                }
+            )
+            if i < args.token_examples:
+                mode_label = "All Pairs" if mode == "all_pairs" else "Success-Only"
+                plot_example(
+                    out_dir / f"heatmap_token_example_{pair.sample_id}_baseline_{mode}.png",
+                    b_attr["token_text"],
+                    b_norm,
+                    f"Baseline token attribution ({pair.sample_id}, {mode_label})",
+                )
 
-    fig, ax = plt.subplots(figsize=(8, 4))
-    x = np.arange(len(labels))
-    w = 0.35
-    ax.bar(x - w / 2, base_mean, width=w, label="baseline")
-    ax.bar(x + w / 2, fw_mean, width=w, label="fragweave")
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=30, ha="right")
-    ax.set_ylabel("Normalized attribution")
-    ax.set_title("Section-level attribution summary")
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(out_dir / "section_attr_barplot.png", dpi=180)
-    plt.close(fig)
+        for i, pair in enumerate(tqdm(fragweave_pairs, desc=f"Attribution pairs ({mode} fragweave)", unit="pair")):
+            target, target_source = choose_target_text(pair)
+            target_source_counts[target_source] += 1
+            fw_prompt = build_prompt(cfg.prompt.target_template, pair.fragweave_context, pair.question)
+            f_attr = chat.compute_input_attribution(fw_prompt, target, method=args.method)
+            f_ids = f_attr["input_ids"][0].tolist()
+            f_text, f_spans, f_alignment = token_char_spans(chat.tokenizer, f_ids)
+            alignment_modes[f_alignment] = alignment_modes.get(f_alignment, 0) + 1
+            f_norm = normalize_attr(np.asarray(f_attr["token_attribution"].tolist(), dtype=np.float32))
+            f_regions = region_summary(f_text, f_spans, f_norm, pair.fragweave_row)
+            benign_carrier_text = select_benign_carrier_text(pair.baseline_context, pair.fragweave_context)
+            f_span_regions = span_summary(f_text, f_spans, f_norm, pair.fragweave_row, benign_carrier_text)
 
-    base_metrics = [concentration_metrics({k.replace("baseline_", ""): r[k] for k in baseline_cols}) for r in span_rows]
-    fw_metrics = [concentration_metrics({k.replace("fragweave_", ""): r[k] for k in frag_cols}) for r in span_rows]
+            fw_dump.append(
+                {
+                    "sample_id": pair.sample_id,
+                    "tokens": f_attr["token_text"],
+                    "attr": f_norm.tolist(),
+                    "target_text": target,
+                    "target_source": target_source,
+                    "char_alignment_mode": f_alignment,
+                    "mode": mode,
+                }
+            )
 
-    metric_labels = ["top2_concentration", "section_entropy", "outside_injection_like", "hhi"]
-    base_metric_mean = np.array([np.mean([m[k] for m in base_metrics]) for k in metric_labels])
-    fw_metric_mean = np.array([np.mean([m[k] for m in fw_metrics]) for k in metric_labels])
+            existing = next((r for r in section_rows if r["sample_id"] == pair.sample_id), None)
+            if existing is None:
+                existing = {"sample_id": pair.sample_id, "target_source": target_source}
+                section_rows.append(existing)
+            for k, v in f_regions.items():
+                existing[f"fragweave_{k}"] = v
 
-    fig, ax = plt.subplots(figsize=(8, 4))
-    x = np.arange(len(metric_labels))
-    w = 0.35
-    ax.bar(x - w / 2, base_metric_mean, width=w, label="baseline")
-    ax.bar(x + w / 2, fw_metric_mean, width=w, label="fragweave")
-    ax.set_xticks(x)
-    ax.set_xticklabels(metric_labels, rotation=20, ha="right")
-    ax.set_ylabel("Metric value")
-    ax.set_title("Attribution concentration and dispersion")
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(out_dir / "attribution_concentration_plot.png", dpi=180)
-    plt.close(fig)
+            existing_span = next((r for r in span_rows if r["sample_id"] == pair.sample_id), None)
+            if existing_span is None:
+                existing_span = {"sample_id": pair.sample_id, "target_source": target_source}
+                span_rows.append(existing_span)
+            for k, v in f_span_regions.items():
+                existing_span[f"fragweave_{k}"] = v
 
-    elapsed_s = time.perf_counter() - start
-    stats = {
-        "n_pairs": len(pairs),
-        "method": args.method,
-        "pairing_diagnostics": {
-            "rows_seen_for_variant": diag.rows_seen_for_variant,
-            "grouped_sample_ids": diag.grouped_sample_ids,
-            "complete_pairs": diag.complete_pairs,
-            "used_pairs": diag.used_pairs,
-            "skipped_missing_fields": diag.skipped_missing_fields,
-            "variant_hint": diag.short_variant_hint(),
-        },
-        "target_source_counts": target_source_counts,
-        "char_alignment_mode_counts": alignment_modes,
-        "baseline_injection_like_mean": float(np.mean([r.get("baseline_injection_like", 0.0) for r in span_rows])),
-        "fragweave_injection_like_mean": float(np.mean([r.get("fragweave_injection_like", 0.0) for r in span_rows])),
-        "baseline_metric_means": {k: float(np.mean([m[k] for m in base_metrics])) for k in metric_labels},
-        "fragweave_metric_means": {k: float(np.mean([m[k] for m in fw_metrics])) for k in metric_labels},
-        "elapsed_seconds": elapsed_s,
-    }
-    (out_dir / "attribution_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    log_line(out_dir, f"Done: n_pairs={len(pairs)} method={args.method} elapsed_seconds={elapsed_s:.2f}")
+            if i < args.token_examples:
+                mode_label = "All Pairs" if mode == "all_pairs" else "Success-Only"
+                plot_example(
+                    out_dir / f"heatmap_token_example_{pair.sample_id}_fragweave_{mode}.png",
+                    f_attr["token_text"],
+                    f_norm,
+                    f"FragWeave token attribution ({pair.sample_id}, {mode_label})",
+                )
+
+        save_token_lines(out_dir / f"attribution_tokens_baseline_{mode}.jsonl", base_dump)
+        save_token_lines(out_dir / f"attribution_tokens_fragweave_{mode}.jsonl", fw_dump)
+
+        section_keys = sorted(k for k in section_rows[0].keys() if k != "sample_id")
+        with (out_dir / f"section_attr_summary_{mode}.csv").open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=["sample_id", *section_keys])
+            writer.writeheader()
+            writer.writerows(section_rows)
+
+        span_keys = sorted(k for k in span_rows[0].keys() if k != "sample_id")
+        with (out_dir / f"span_attr_summary_{mode}.csv").open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=["sample_id", *span_keys])
+            writer.writeheader()
+            writer.writerows(span_rows)
+
+        baseline_section_cols = [k for k in section_keys if k.startswith("baseline_")]
+        frag_section_cols = [k for k in section_keys if k.startswith("fragweave_")]
+        base_section_mean = np.array([np.mean([r.get(k, 0.0) for r in section_rows]) for k in baseline_section_cols])
+        fw_section_mean = np.array([np.mean([r.get(k, 0.0) for r in section_rows]) for k in frag_section_cols])
+        section_labels = [k.replace("baseline_", "") for k in baseline_section_cols]
+
+        mode_label = "All Pairs" if mode == "all_pairs" else "Success-Only"
+        fig, ax = plt.subplots(figsize=(8, 4))
+        x = np.arange(len(section_labels))
+        w = 0.35
+        ax.bar(x - w / 2, base_section_mean, width=w, label="baseline")
+        ax.bar(x + w / 2, fw_section_mean, width=w, label="fragweave")
+        ax.set_xticks(x)
+        ax.set_xticklabels(section_labels, rotation=30, ha="right")
+        ax.set_ylabel("Normalized attribution")
+        ax.set_title(f"Section-level attribution summary ({mode_label})")
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(out_dir / f"section_attr_barplot_{mode}.png", dpi=180)
+        plt.close(fig)
+
+        baseline_span_cols = [k for k in span_keys if k.startswith("baseline_")]
+        frag_span_cols = [k for k in span_keys if k.startswith("fragweave_")]
+        base_span_mean = np.array([np.mean([r.get(k, 0.0) for r in span_rows]) for k in baseline_span_cols])
+        fw_span_mean = np.array([np.mean([r.get(k, 0.0) for r in span_rows]) for k in frag_span_cols])
+        span_labels = [k.replace("baseline_", "") for k in baseline_span_cols]
+
+        fig, ax = plt.subplots(figsize=(8, 4))
+        x = np.arange(len(span_labels))
+        w = 0.35
+        ax.bar(x - w / 2, base_span_mean, width=w, label="baseline")
+        ax.bar(x + w / 2, fw_span_mean, width=w, label="fragweave")
+        ax.set_xticks(x)
+        ax.set_xticklabels(span_labels, rotation=30, ha="right")
+        ax.set_ylabel("Normalized attribution")
+        ax.set_title(f"Span-level attribution summary ({mode_label})")
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(out_dir / f"span_attr_barplot_{mode}.png", dpi=180)
+        plt.close(fig)
+
+        base_metrics = [
+            concentration_metrics({k.replace("baseline_", ""): r.get(k, 0.0) for k in baseline_section_cols})
+            for r in section_rows
+        ]
+        fw_metrics = [
+            concentration_metrics({k.replace("fragweave_", ""): r.get(k, 0.0) for k in frag_section_cols})
+            for r in section_rows
+        ]
+        metric_labels = ["top2_concentration", "section_entropy", "outside_injection_like", "hhi"]
+        base_metric_mean = np.array([np.mean([m[k] for m in base_metrics]) for k in metric_labels])
+        fw_metric_mean = np.array([np.mean([m[k] for m in fw_metrics]) for k in metric_labels])
+
+        fig, ax = plt.subplots(figsize=(8, 4))
+        x = np.arange(len(metric_labels))
+        w = 0.35
+        ax.bar(x - w / 2, base_metric_mean, width=w, label="baseline")
+        ax.bar(x + w / 2, fw_metric_mean, width=w, label="fragweave")
+        ax.set_xticks(x)
+        ax.set_xticklabels(metric_labels, rotation=20, ha="right")
+        ax.set_ylabel("Metric value")
+        ax.set_title(f"Section attribution concentration and dispersion ({mode_label})")
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(out_dir / f"attribution_concentration_plot_{mode}.png", dpi=180)
+        plt.close(fig)
+
+        span_metric_labels = ["top2_concentration", "section_entropy", "outside_injection_like", "hhi"]
+        base_span_metrics = [
+            concentration_metrics({k.replace("baseline_", ""): r.get(k, 0.0) for k in baseline_span_cols})
+            for r in span_rows
+        ]
+        fw_span_metrics = [
+            concentration_metrics({k.replace("fragweave_", ""): r.get(k, 0.0) for k in frag_span_cols})
+            for r in span_rows
+        ]
+
+        elapsed_s = time.perf_counter() - start
+        stats = {
+            "mode": mode,
+            "mode_label": mode_label,
+            "mode_rule": mode_diag.rule,
+            "n_pairs_total": mode_diag.total_pairs,
+            "n_pairs_baseline": mode_diag.baseline_pairs,
+            "n_pairs_fragweave": mode_diag.fragweave_pairs,
+            "method": args.method,
+            "pairing_diagnostics": {
+                "rows_seen_for_variant": diag.rows_seen_for_variant,
+                "grouped_sample_ids": diag.grouped_sample_ids,
+                "complete_pairs": diag.complete_pairs,
+                "used_pairs": diag.used_pairs,
+                "skipped_missing_fields": diag.skipped_missing_fields,
+                "variant_hint": diag.short_variant_hint(),
+            },
+            "target_source_counts": target_source_counts,
+            "char_alignment_mode_counts": alignment_modes,
+            "section_metric_means": {
+                "baseline": {k: float(np.mean([m[k] for m in base_metrics])) for k in metric_labels},
+                "fragweave": {k: float(np.mean([m[k] for m in fw_metrics])) for k in metric_labels},
+            },
+            "span_metric_means": {
+                "baseline": {k: float(np.mean([m[k] for m in base_span_metrics])) for k in span_metric_labels},
+                "fragweave": {k: float(np.mean([m[k] for m in fw_span_metrics])) for k in span_metric_labels},
+            },
+            "elapsed_seconds": elapsed_s,
+        }
+        (out_dir / f"attr_stats_{mode}.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
+        log_line(
+            out_dir,
+            f"Done: mode={mode} baseline_pairs={mode_diag.baseline_pairs} "
+            f"fragweave_pairs={mode_diag.fragweave_pairs} method={args.method} elapsed_seconds={elapsed_s:.2f}",
+        )
 
 
 if __name__ == "__main__":

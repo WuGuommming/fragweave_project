@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import json
+import re
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Tuple
 
 import numpy as np
 import torch
@@ -46,6 +47,15 @@ class PairingDiagnostics:
             return "no variants found in debug file"
         top = sorted(self.variant_counts.items(), key=lambda x: (-x[1], x[0]))[:top_k]
         return ", ".join(f"{k}({v})" for k, v in top)
+
+
+@dataclass
+class PairModeDiagnostics:
+    mode: Literal["all_pairs", "success_only"]
+    rule: str
+    total_pairs: int
+    baseline_pairs: int
+    fragweave_pairs: int
 
 
 
@@ -194,6 +204,96 @@ def pair_rows(
 
 def build_prompt(template: str, context: str, question: str) -> str:
     return template.format(context=context, question=question)
+
+
+def sentence_spans(text: str) -> List[Tuple[int, int]]:
+    out: List[Tuple[int, int]] = []
+    start = 0
+    for m in re.finditer(r"[.!?]\s+", text):
+        end = m.end()
+        out.append((start, end))
+        start = end
+    if start < len(text):
+        out.append((start, len(text)))
+    return [x for x in out if x[1] - x[0] > 16]
+
+
+def select_benign_carrier_text(baseline_context: str, fragweave_context: str) -> str:
+    base_sentences = sentence_spans(baseline_context)
+    frag_sentences = sentence_spans(fragweave_context)
+    if base_sentences:
+        st, ed = base_sentences[min(1, len(base_sentences) - 1)]
+        return baseline_context[st:ed]
+    if frag_sentences:
+        st, ed = frag_sentences[min(1, len(frag_sentences) - 1)]
+        return fragweave_context[st:ed]
+    return ""
+
+
+def row_attack_succeeded(row: Dict[str, Any]) -> bool:
+    direct_keys = ("attack_succeeded", "is_attack_success", "success")
+    for key in direct_keys:
+        val = row.get(key)
+        if isinstance(val, bool):
+            return val
+
+    judge = row.get("attack_judge")
+    if isinstance(judge, dict):
+        for key in ("attack_succeeded", "success"):
+            val = judge.get(key)
+            if isinstance(val, bool):
+                return val
+
+        raw = judge.get("raw")
+        if isinstance(raw, str) and raw.strip():
+            try:
+                parsed = json.loads(raw)
+                for key in ("attack_succeeded", "success"):
+                    val = parsed.get(key)
+                    if isinstance(val, bool):
+                        return val
+            except json.JSONDecodeError:
+                pass
+
+        ok = judge.get("ok")
+        if isinstance(ok, bool):
+            return ok
+    return False
+
+
+def split_pairs_by_mode(
+    pairs: List[PairedSample],
+    mode: Literal["all_pairs", "success_only"],
+) -> Tuple[List[PairedSample], List[PairedSample], PairModeDiagnostics]:
+    if mode == "all_pairs":
+        return (
+            pairs,
+            pairs,
+            PairModeDiagnostics(
+                mode=mode,
+                rule="No success filter; use paired samples after variant/context checks.",
+                total_pairs=len(pairs),
+                baseline_pairs=len(pairs),
+                fragweave_pairs=len(pairs),
+            ),
+        )
+
+    baseline_pairs = [p for p in pairs if row_attack_succeeded(p.baseline_row)]
+    fragweave_pairs = [p for p in pairs if row_attack_succeeded(p.fragweave_row)]
+    return (
+        baseline_pairs,
+        fragweave_pairs,
+        PairModeDiagnostics(
+            mode=mode,
+            rule=(
+                "Success-only filter by side: baseline set uses baseline_row attack success; "
+                "fragweave set uses fragweave_row attack success."
+            ),
+            total_pairs=len(pairs),
+            baseline_pairs=len(baseline_pairs),
+            fragweave_pairs=len(fragweave_pairs),
+        ),
+    )
 
 
 def load_analysis_stack(config_path: str | Path) -> Tuple[RunConfig, HFChat]:
