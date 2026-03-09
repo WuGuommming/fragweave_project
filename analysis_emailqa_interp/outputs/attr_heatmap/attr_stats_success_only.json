@@ -26,29 +26,29 @@
   },
   "section_metric_means": {
     "baseline": {
-      "top2_concentration": 0.7669480130696298,
-      "section_entropy": 0.8584381414612405,
-      "outside_injection_like": 0.9076801315296249,
-      "hhi": 0.3443636624707409
+      "top2_concentration": 0.7669480202014869,
+      "section_entropy": 0.8584377751876209,
+      "outside_injection_like": 0.9076801105733896,
+      "hhi": 0.34436401140621775
     },
     "fragweave": {
-      "top2_concentration": 0.6921961376365333,
-      "section_entropy": 0.917593095931808,
-      "outside_injection_like": 0.765558884597257,
-      "hhi": 0.30384582629356055
+      "top2_concentration": 0.6921960747603902,
+      "section_entropy": 0.9175932408721661,
+      "outside_injection_like": 0.7655589193313113,
+      "hhi": 0.3038457167577665
     }
   },
   "span_metric_means": {
     "baseline": {
-      "top2_concentration": 0.927443361863825,
-      "span_entropy": 0.45616702333307835,
-      "hhi": 0.6505335590105865
+      "top2_concentration": 0.788101296837247,
+      "span_entropy": 0.7185438543652325,
+      "hhi": 0.35656451527166283
     },
     "fragweave": {
-      "top2_concentration": 0.9940412076824003,
-      "span_entropy": 0.12057693333057258,
-      "hhi": 0.9114540670841867
+      "top2_concentration": 0.7241079229489962,
+      "span_entropy": 0.8142496633984007,
+      "hhi": 0.3069995942275277
     }
   },
-  "elapsed_seconds": 59.267014265060425
+  "elapsed_seconds": 58.58974279463291
 }

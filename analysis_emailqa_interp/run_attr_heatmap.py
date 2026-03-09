@@ -101,15 +101,18 @@ def span_summary(
     row: Dict,
     benign_carrier_text: str,
 ) -> Dict[str, float]:
-    attack_spans = [locate_span(prompt_text, s) for s in attack_anchor_texts(row)]
-    woven_spans = [locate_span(prompt_text, str(s)) for s in (row.get("shards") or [])]
-    carrier_span = locate_span(prompt_text, benign_carrier_text)
-    is_baseline = bool(row.get("is_direct_baseline"))
+    # Legacy span-level behavior from the pre-section-level version.
+    # Keep the signature unchanged so the current caller does not need to change.
+    sections = find_sections(prompt_text)
+    frag_spans = [locate_span(prompt_text, str(s)) for s in (row.get("shards") or [])]
+    guide_spans = [locate_span(prompt_text, str(s)) for s in (row.get("guidance") or [])]
+    inj_span = locate_span(prompt_text, str(row.get("malicious_instruction") or ""))
 
     out = {
-        "baseline_injection_span": 0.0,
-        "fragweave_woven_span": 0.0,
-        "benign_carrier_span": 0.0,
+        "question": 0.0,
+        "main_context": 0.0,
+        "guidance": 0.0,
+        "injection_like": 0.0,
         "other": 0.0,
     }
 
@@ -117,16 +120,16 @@ def span_summary(
         val = float(attr[i])
         label = "other"
 
-        if is_baseline:
-            if any(span and st >= span[0] and ed <= span[1] for span in attack_spans):
-                label = "baseline_injection_span"
-            elif carrier_span and st >= carrier_span[0] and ed <= carrier_span[1]:
-                label = "benign_carrier_span"
-        else:
-            if any(span and st >= span[0] and ed <= span[1] for span in woven_spans):
-                label = "fragweave_woven_span"
-            elif carrier_span and st >= carrier_span[0] and ed <= carrier_span[1]:
-                label = "benign_carrier_span"
+        if inj_span and st >= inj_span[0] and ed <= inj_span[1]:
+            label = "injection_like"
+        elif any(span and st >= span[0] and ed <= span[1] for span in frag_spans):
+            label = "injection_like"
+        elif any(span and st >= span[0] and ed <= span[1] for span in guide_spans):
+            label = "guidance"
+        elif "question" in sections and st >= sections["question"][0] and ed <= sections["question"][1]:
+            label = "question"
+        elif "main_context" in sections and st >= sections["main_context"][0] and ed <= sections["main_context"][1]:
+            label = "main_context"
 
         out[label] += val
 
