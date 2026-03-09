@@ -1,0 +1,24 @@
+{
+  "n_pairs": 20,
+  "n_points": 120,
+  "feature_dim": 3584,
+  "similarity": {
+    "baseline_injection__benign_carrier": 0.8109631401388715,
+    "fragweave_woven__benign_carrier": 0.9164004747105666,
+    "baseline_injection__fragweave_woven": 0.8585682747873514
+  },
+  "centroid_distance": {
+    "baseline_injection__benign_carrier": 106.66036987304688,
+    "fragweave_woven__benign_carrier": 73.25508880615234,
+    "baseline_injection__fragweave_woven": 83.13584899902344
+  },
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 20,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "elapsed_seconds": 29.668151672929525
+}

@@ -18,7 +18,19 @@
     "offset_mapping": 40,
     "approximate": 0
   },
-  "baseline_injection_like_mean": 0.058467655738637804,
-  "fragweave_injection_like_mean": 0.03191386526569631,
-  "elapsed_seconds": 35.408093187958
+  "baseline_injection_like_mean": 0.0584675883426866,
+  "fragweave_injection_like_mean": 0.15708550518698344,
+  "baseline_metric_means": {
+    "top2_concentration": 0.8016261904688721,
+    "section_entropy": 0.8114498898559802,
+    "outside_injection_like": 0.9415324116573134,
+    "hhi": 0.3729887310070411
+  },
+  "fragweave_metric_means": {
+    "top2_concentration": 0.741108321668439,
+    "section_entropy": 0.8849937629120209,
+    "outside_injection_like": 0.8429144948130164,
+    "hhi": 0.32716047849845054
+  },
+  "elapsed_seconds": 35.30217827484012
 }

@@ -13,7 +13,7 @@
     "offset_mapping": 40,
     "approximate": 0
   },
-  "baseline_main_context_prompt_attention": 0.16878108256029223,
-  "fragweave_main_context_prompt_attention": 0.2066765310924894,
-  "elapsed_seconds": 59.10267483443022
+  "baseline_main_context_prompt_attention": 0.13564691191959755,
+  "fragweave_main_context_prompt_attention": 0.14381959105122735,
+  "elapsed_seconds": 31.949367627501488
 }
