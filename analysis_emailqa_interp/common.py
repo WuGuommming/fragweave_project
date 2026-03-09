@@ -106,11 +106,6 @@ def _get_fragweave_context(row: Dict[str, Any]) -> str:
 
 
 def pair_rows_with_diagnostics(
-=======
-    return str(row.get("context") or row.get("cleaned_context") or "")
-
-
-def pair_rows(
     rows: Iterable[Dict[str, Any]],
     *,
     variant_id: str,
