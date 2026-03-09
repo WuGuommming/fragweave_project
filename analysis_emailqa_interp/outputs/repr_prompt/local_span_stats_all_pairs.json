@@ -1,0 +1,29 @@
+{
+  "mode": "all_pairs",
+  "mode_label": "All Pairs",
+  "mode_rule": "No success filter; use paired samples after variant/context checks.",
+  "n_pairs_total": 50,
+  "n_pairs_baseline": 50,
+  "n_pairs_fragweave": 50,
+  "n_points": 300,
+  "feature_dim": 3584,
+  "similarity": {
+    "baseline_injection__benign_carrier": 0.7807759483838524,
+    "fragweave_woven__benign_carrier": 0.9023912401099962,
+    "baseline_injection__fragweave_woven": 0.8382965251486972
+  },
+  "centroid_distance": {
+    "baseline_injection__benign_carrier": 119.31572723388672,
+    "fragweave_woven__benign_carrier": 82.83212280273438,
+    "baseline_injection__fragweave_woven": 89.52523040771484
+  },
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 50,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "elapsed_seconds": 54.588009770959616
+}

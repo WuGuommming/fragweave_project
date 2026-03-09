@@ -1,1 +1,2 @@
-Done: n_pairs=20 tail_prompt_tokens=8 elapsed_seconds=31.95
+Done: mode=all_pairs baseline_pairs=50 fragweave_pairs=50 elapsed_seconds=124.63
+Done: mode=success_only baseline_pairs=10 fragweave_pairs=10 elapsed_seconds=139.96

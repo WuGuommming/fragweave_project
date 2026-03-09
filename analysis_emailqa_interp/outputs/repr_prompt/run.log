@@ -1,1 +1,2 @@
-Done: n_pairs=20, feature_dim=3584, elapsed_seconds=29.67
+Done: mode=all_pairs, n_points=300, feature_dim=3584, elapsed_seconds=54.59
+Done: mode=success_only, n_points=60, feature_dim=3584, elapsed_seconds=62.51

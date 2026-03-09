@@ -1,1 +1,3 @@
-Done: n_pairs=20 method=grad_x_input elapsed_seconds=35.30
+Done: mode=all_pairs baseline_pairs=20 fragweave_pairs=20 method=grad_x_input elapsed_seconds=33.92
+Done: mode=all_pairs baseline_pairs=50 fragweave_pairs=50 method=grad_x_input elapsed_seconds=52.22
+Done: mode=success_only baseline_pairs=10 fragweave_pairs=10 method=grad_x_input elapsed_seconds=59.27

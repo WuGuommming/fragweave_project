@@ -1,0 +1,24 @@
+{
+  "mode": "success_only",
+  "mode_label": "Success-Only",
+  "mode_rule": "Paired intersection success-only: keep samples where both baseline_row and fragweave_row are attack-successful.",
+  "n_pairs_total": 50,
+  "n_pairs_baseline": 10,
+  "n_pairs_fragweave": 10,
+  "tail_prompt_tokens": 8,
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 50,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "char_alignment_mode_counts": {
+    "offset_mapping": 20,
+    "approximate": 0
+  },
+  "baseline_main_context_prompt_attention": 0.13116532703764322,
+  "fragweave_main_context_prompt_attention": 0.14037415919492455,
+  "elapsed_seconds": 139.95902420952916
+}

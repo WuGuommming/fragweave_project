@@ -1,0 +1,54 @@
+{
+  "mode": "all_pairs",
+  "mode_label": "All Pairs",
+  "mode_rule": "No success filter; use paired samples after variant/context checks.",
+  "attack_region_rule": "attack_anchor_texts(row): shards/guidance/loc_debug.snippets, with malicious_instruction only as fallback",
+  "n_pairs_total": 50,
+  "n_pairs_baseline": 50,
+  "n_pairs_fragweave": 50,
+  "method": "grad_x_input",
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 50,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "target_source_counts": {
+    "target_response": 100,
+    "malicious_instruction": 0,
+    "fallback": 0
+  },
+  "char_alignment_mode_counts": {
+    "offset_mapping": 100,
+    "approximate": 0
+  },
+  "section_metric_means": {
+    "baseline": {
+      "top2_concentration": 0.7656971975421929,
+      "section_entropy": 0.8511111216662437,
+      "outside_injection_like": 0.9119922065058981,
+      "hhi": 0.3504304821394696
+    },
+    "fragweave": {
+      "top2_concentration": 0.7027833750163325,
+      "section_entropy": 0.9059597412290897,
+      "outside_injection_like": 0.8004818382104654,
+      "hhi": 0.31294442627368624
+    }
+  },
+  "span_metric_means": {
+    "baseline": {
+      "top2_concentration": 0.9425104492154999,
+      "span_entropy": 0.3808405920966087,
+      "hhi": 0.7221059460583947
+    },
+    "fragweave": {
+      "top2_concentration": 0.9976268106982101,
+      "span_entropy": 0.12261023477065307,
+      "hhi": 0.9151393800183252
+    }
+  },
+  "elapsed_seconds": 52.22073394060135
+}

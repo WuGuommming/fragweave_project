@@ -1,0 +1,54 @@
+{
+  "mode": "success_only",
+  "mode_label": "Success-Only",
+  "mode_rule": "Paired intersection success-only: keep samples where both baseline_row and fragweave_row are attack-successful.",
+  "attack_region_rule": "attack_anchor_texts(row): shards/guidance/loc_debug.snippets, with malicious_instruction only as fallback",
+  "n_pairs_total": 50,
+  "n_pairs_baseline": 10,
+  "n_pairs_fragweave": 10,
+  "method": "grad_x_input",
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 50,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "target_source_counts": {
+    "target_response": 20,
+    "malicious_instruction": 0,
+    "fallback": 0
+  },
+  "char_alignment_mode_counts": {
+    "offset_mapping": 20,
+    "approximate": 0
+  },
+  "section_metric_means": {
+    "baseline": {
+      "top2_concentration": 0.7669480130696298,
+      "section_entropy": 0.8584381414612405,
+      "outside_injection_like": 0.9076801315296249,
+      "hhi": 0.3443636624707409
+    },
+    "fragweave": {
+      "top2_concentration": 0.6921961376365333,
+      "section_entropy": 0.917593095931808,
+      "outside_injection_like": 0.765558884597257,
+      "hhi": 0.30384582629356055
+    }
+  },
+  "span_metric_means": {
+    "baseline": {
+      "top2_concentration": 0.927443361863825,
+      "span_entropy": 0.45616702333307835,
+      "hhi": 0.6505335590105865
+    },
+    "fragweave": {
+      "top2_concentration": 0.9940412076824003,
+      "span_entropy": 0.12057693333057258,
+      "hhi": 0.9114540670841867
+    }
+  },
+  "elapsed_seconds": 59.267014265060425
+}

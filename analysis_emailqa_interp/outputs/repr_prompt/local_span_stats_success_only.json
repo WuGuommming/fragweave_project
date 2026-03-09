@@ -1,0 +1,29 @@
+{
+  "mode": "success_only",
+  "mode_label": "Success-Only",
+  "mode_rule": "Paired intersection success-only: keep samples where both baseline_row and fragweave_row are attack-successful.",
+  "n_pairs_total": 50,
+  "n_pairs_baseline": 10,
+  "n_pairs_fragweave": 10,
+  "n_points": 60,
+  "feature_dim": 3584,
+  "similarity": {
+    "baseline_injection__benign_carrier": 0.6308532932234254,
+    "fragweave_woven__benign_carrier": 0.9075161460615846,
+    "baseline_injection__fragweave_woven": 0.7739018676224052
+  },
+  "centroid_distance": {
+    "baseline_injection__benign_carrier": 154.8965606689453,
+    "fragweave_woven__benign_carrier": 85.8067855834961,
+    "baseline_injection__fragweave_woven": 102.93380737304688
+  },
+  "pairing_diagnostics": {
+    "rows_seen_for_variant": 100,
+    "grouped_sample_ids": 50,
+    "complete_pairs": 50,
+    "used_pairs": 50,
+    "skipped_missing_fields": 0,
+    "variant_hint": "k3_refs0_guideA(100), k3_refs1_guideA(100), k4_refs0_guideA(100), k4_refs1_guideA(100), k5_refs0_guideA(100), k5_refs1_guideA(100)"
+  },
+  "elapsed_seconds": 62.50928781181574
+}

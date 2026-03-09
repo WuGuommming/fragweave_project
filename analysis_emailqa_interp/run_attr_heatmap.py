@@ -104,6 +104,7 @@ def span_summary(
     attack_spans = [locate_span(prompt_text, s) for s in attack_anchor_texts(row)]
     woven_spans = [locate_span(prompt_text, str(s)) for s in (row.get("shards") or [])]
     carrier_span = locate_span(prompt_text, benign_carrier_text)
+    is_baseline = bool(row.get("is_direct_baseline"))
 
     out = {
         "baseline_injection_span": 0.0,
@@ -111,15 +112,22 @@ def span_summary(
         "benign_carrier_span": 0.0,
         "other": 0.0,
     }
+
     for i, (st, ed) in enumerate(token_spans):
         val = float(attr[i])
         label = "other"
-        if any(span and st >= span[0] and ed <= span[1] for span in attack_spans):
-            label = "baseline_injection_span"
-        elif any(span and st >= span[0] and ed <= span[1] for span in woven_spans):
-            label = "fragweave_woven_span"
-        elif carrier_span and st >= carrier_span[0] and ed <= carrier_span[1]:
-            label = "benign_carrier_span"
+
+        if is_baseline:
+            if any(span and st >= span[0] and ed <= span[1] for span in attack_spans):
+                label = "baseline_injection_span"
+            elif carrier_span and st >= carrier_span[0] and ed <= carrier_span[1]:
+                label = "benign_carrier_span"
+        else:
+            if any(span and st >= span[0] and ed <= span[1] for span in woven_spans):
+                label = "fragweave_woven_span"
+            elif carrier_span and st >= carrier_span[0] and ed <= carrier_span[1]:
+                label = "benign_carrier_span"
+
         out[label] += val
 
     total = sum(out.values()) + 1e-12
@@ -199,7 +207,7 @@ def main() -> None:
     run_modes = ["all_pairs", "success_only"] if args.mode == "both" else [args.mode]
     for mode in run_modes:
         baseline_pairs, fragweave_pairs, mode_diag = split_pairs_by_mode(pairs, mode)
-        if mode == "success_only" and (mode_diag.baseline_pairs <= 2 or mode_diag.fragweave_pairs <= 2):
+        if mode == "success_only" and (mode_diag.baseline_pairs < 2 or mode_diag.fragweave_pairs < 2):
             raise RuntimeError(
                 "success_only mode requires >2 samples per side; "
                 f"got baseline={mode_diag.baseline_pairs}, fragweave={mode_diag.fragweave_pairs}."

@@ -16,7 +16,7 @@ from fragweave.models.hf_chat import HFChat
 DEFAULT_DEBUG_JSONL = "outputs/emailqa_fragweave_loc_san/debug_fragments_12.jsonl"
 DEFAULT_CONFIG_PATH = "configs/emailqa_with_localization_and_sanitization.yaml"
 DEFAULT_VARIANT_ID = "k3_refs1_guideA"
-DEFAULT_MAX_PAIRED = 20
+DEFAULT_MAX_PAIRED = 50
 DEFAULT_SEED = 2026
 
 
