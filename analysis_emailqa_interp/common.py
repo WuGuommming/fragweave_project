@@ -31,6 +31,7 @@ class PairedSample:
     fragweave_row: Dict[str, Any]
 
 
+
 @dataclass
 class PairingDiagnostics:
     variant_counts: Dict[str, int]
@@ -45,6 +46,7 @@ class PairingDiagnostics:
             return "no variants found in debug file"
         top = sorted(self.variant_counts.items(), key=lambda x: (-x[1], x[0]))[:top_k]
         return ", ".join(f"{k}({v})" for k, v in top)
+
 
 
 def ensure_dir(path: str | Path) -> Path:
@@ -104,6 +106,11 @@ def _get_fragweave_context(row: Dict[str, Any]) -> str:
 
 
 def pair_rows_with_diagnostics(
+=======
+    return str(row.get("context") or row.get("cleaned_context") or "")
+
+
+def pair_rows(
     rows: Iterable[Dict[str, Any]],
     *,
     variant_id: str,
