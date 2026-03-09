@@ -15,6 +15,7 @@ if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from analysis_emailqa_interp.common import (
+    attack_anchor_texts,
     DEFAULT_CONFIG_PATH,
     DEFAULT_DEBUG_JSONL,
     DEFAULT_MAX_PAIRED,
@@ -75,19 +76,13 @@ def choose_target_text(pair) -> Tuple[str, str]:
 
 def region_summary(prompt_text: str, token_spans: List[Tuple[int, int]], attr: np.ndarray, row: Dict) -> Dict[str, float]:
     sections = find_sections(prompt_text)
-    frag_spans = [locate_span(prompt_text, str(s)) for s in (row.get("shards") or [])]
-    guide_spans = [locate_span(prompt_text, str(s)) for s in (row.get("guidance") or [])]
-    inj_span = locate_span(prompt_text, str(row.get("malicious_instruction") or ""))
+    attack_spans = [locate_span(prompt_text, s) for s in attack_anchor_texts(row)]
 
     out = {"question": 0.0, "main_context": 0.0, "injection_like": 0.0, "other": 0.0}
     for i, (st, ed) in enumerate(token_spans):
         val = float(attr[i])
         label = "other"
-        if inj_span and st >= inj_span[0] and ed <= inj_span[1]:
-            label = "injection_like"
-        elif any(span and st >= span[0] and ed <= span[1] for span in frag_spans):
-            label = "injection_like"
-        elif any(span and st >= span[0] and ed <= span[1] for span in guide_spans):
+        if any(span and st >= span[0] and ed <= span[1] for span in attack_spans):
             label = "injection_like"
         elif "question" in sections and st >= sections["question"][0] and ed <= sections["question"][1]:
             label = "question"
@@ -106,7 +101,7 @@ def span_summary(
     row: Dict,
     benign_carrier_text: str,
 ) -> Dict[str, float]:
-    baseline_inj_span = locate_span(prompt_text, str(row.get("malicious_instruction") or ""))
+    attack_spans = [locate_span(prompt_text, s) for s in attack_anchor_texts(row)]
     woven_spans = [locate_span(prompt_text, str(s)) for s in (row.get("shards") or [])]
     carrier_span = locate_span(prompt_text, benign_carrier_text)
 
@@ -119,7 +114,7 @@ def span_summary(
     for i, (st, ed) in enumerate(token_spans):
         val = float(attr[i])
         label = "other"
-        if baseline_inj_span and st >= baseline_inj_span[0] and ed <= baseline_inj_span[1]:
+        if any(span and st >= span[0] and ed <= span[1] for span in attack_spans):
             label = "baseline_injection_span"
         elif any(span and st >= span[0] and ed <= span[1] for span in woven_spans):
             label = "fragweave_woven_span"
@@ -145,6 +140,17 @@ def concentration_metrics(region_dist: Dict[str, float], top_k: int = 2) -> Dict
         "top2_concentration": float(values[:top_k].sum()),
         "section_entropy": entropy,
         "outside_injection_like": float(1.0 - region_dist.get("injection_like", 0.0)),
+        "hhi": float(np.sum(values**2)),
+    }
+
+
+def span_concentration_metrics(region_dist: Dict[str, float], top_k: int = 2) -> Dict[str, float]:
+    values = np.asarray(sorted(region_dist.values(), reverse=True), dtype=np.float64)
+    values = values / (values.sum() + 1e-12)
+    entropy = -float(np.sum(values * np.log(values + 1e-12)) / np.log(len(values) + 1e-12))
+    return {
+        "top2_concentration": float(values[:top_k].sum()),
+        "span_entropy": entropy,
         "hhi": float(np.sum(values**2)),
     }
 
@@ -383,13 +389,13 @@ def main() -> None:
         fig.savefig(out_dir / f"attribution_concentration_plot_{mode}.png", dpi=180)
         plt.close(fig)
 
-        span_metric_labels = ["top2_concentration", "section_entropy", "outside_injection_like", "hhi"]
+        span_metric_labels = ["top2_concentration", "span_entropy", "hhi"]
         base_span_metrics = [
-            concentration_metrics({k.replace("baseline_", ""): r.get(k, 0.0) for k in baseline_span_cols})
+            span_concentration_metrics({k.replace("baseline_", ""): r.get(k, 0.0) for k in baseline_span_cols})
             for r in span_rows
         ]
         fw_span_metrics = [
-            concentration_metrics({k.replace("fragweave_", ""): r.get(k, 0.0) for k in frag_span_cols})
+            span_concentration_metrics({k.replace("fragweave_", ""): r.get(k, 0.0) for k in frag_span_cols})
             for r in span_rows
         ]
 
@@ -398,6 +404,10 @@ def main() -> None:
             "mode": mode,
             "mode_label": mode_label,
             "mode_rule": mode_diag.rule,
+            "attack_region_rule": (
+                "attack_anchor_texts(row): shards/guidance/loc_debug.snippets, "
+                "with malicious_instruction only as fallback"
+            ),
             "n_pairs_total": mode_diag.total_pairs,
             "n_pairs_baseline": mode_diag.baseline_pairs,
             "n_pairs_fragweave": mode_diag.fragweave_pairs,

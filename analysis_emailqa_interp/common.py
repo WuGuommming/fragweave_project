@@ -58,6 +58,14 @@ class PairModeDiagnostics:
     fragweave_pairs: int
 
 
+def _to_string_list(v: Any) -> List[str]:
+    if isinstance(v, list):
+        return [str(x).strip() for x in v if str(x).strip()]
+    if isinstance(v, str) and v.strip():
+        return [v.strip()]
+    return []
+
+
 
 def ensure_dir(path: str | Path) -> Path:
     p = Path(path)
@@ -261,6 +269,27 @@ def row_attack_succeeded(row: Dict[str, Any]) -> bool:
     return False
 
 
+def attack_anchor_texts(row: Dict[str, Any]) -> List[str]:
+    anchors: List[str] = []
+    anchors.extend(_to_string_list(row.get("shards")))
+    anchors.extend(_to_string_list(row.get("guidance")))
+
+    loc_debug = row.get("loc_debug")
+    if isinstance(loc_debug, dict):
+        anchors.extend(_to_string_list(loc_debug.get("snippets")))
+
+    if not anchors:
+        anchors.extend(_to_string_list(row.get("malicious_instruction")))
+
+    seen = set()
+    deduped: List[str] = []
+    for text in anchors:
+        if text not in seen:
+            seen.add(text)
+            deduped.append(text)
+    return deduped
+
+
 def split_pairs_by_mode(
     pairs: List[PairedSample],
     mode: Literal["all_pairs", "success_only"],
@@ -278,20 +307,19 @@ def split_pairs_by_mode(
             ),
         )
 
-    baseline_pairs = [p for p in pairs if row_attack_succeeded(p.baseline_row)]
-    fragweave_pairs = [p for p in pairs if row_attack_succeeded(p.fragweave_row)]
+    intersection_pairs = [p for p in pairs if row_attack_succeeded(p.baseline_row) and row_attack_succeeded(p.fragweave_row)]
     return (
-        baseline_pairs,
-        fragweave_pairs,
+        intersection_pairs,
+        intersection_pairs,
         PairModeDiagnostics(
             mode=mode,
             rule=(
-                "Success-only filter by side: baseline set uses baseline_row attack success; "
-                "fragweave set uses fragweave_row attack success."
+                "Paired intersection success-only: keep samples where both baseline_row and "
+                "fragweave_row are attack-successful."
             ),
             total_pairs=len(pairs),
-            baseline_pairs=len(baseline_pairs),
-            fragweave_pairs=len(fragweave_pairs),
+            baseline_pairs=len(intersection_pairs),
+            fragweave_pairs=len(intersection_pairs),
         ),
     )
 
