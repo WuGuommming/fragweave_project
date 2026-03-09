@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import json
 import sys
+import time
 from pathlib import Path
+
+import numpy as np
+from tqdm.auto import tqdm
 
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-import csv
-import json
-
-import numpy as np
 
 from analysis_emailqa_interp.common import (
     DEFAULT_CONFIG_PATH,
@@ -22,7 +23,7 @@ from analysis_emailqa_interp.common import (
     ensure_dir,
     load_analysis_stack,
     log_line,
-    pair_rows,
+    pair_rows_with_diagnostics,
     read_jsonl,
     save_run_config,
     set_seed,
@@ -51,6 +52,7 @@ def encode_layers(chat, prompt: str) -> np.ndarray:
 
 def main() -> None:
     args = parse_args()
+    start = time.perf_counter()
     try:
         import matplotlib.pyplot as plt
     except ModuleNotFoundError as exc:
@@ -61,11 +63,19 @@ def main() -> None:
     save_run_config(out_dir, vars(args))
 
     rows = read_jsonl(args.debug_jsonl)
-    pairs = pair_rows(rows, variant_id=args.variant_id, max_pairs=args.max_pairs)
+    pairs, diag = pair_rows_with_diagnostics(rows, variant_id=args.variant_id, max_pairs=args.max_pairs)
+    if not pairs:
+        raise RuntimeError(
+            "No valid paired samples after filtering. "
+            f"variant_id={args.variant_id}, rows_seen_for_variant={diag.rows_seen_for_variant}, "
+            f"grouped_sample_ids={diag.grouped_sample_ids}, complete_pairs={diag.complete_pairs}, "
+            f"skipped_missing_fields={diag.skipped_missing_fields}. "
+            f"Available variants (top): {diag.short_variant_hint()}"
+        )
     cfg, chat = load_analysis_stack(args.config)
 
     all_orig, all_base, all_fw = [], [], []
-    for pair in pairs:
+    for pair in tqdm(pairs, desc="Layer trajectory pairs", unit="pair"):
         p_o = build_prompt(cfg.prompt.target_template, pair.original_context, pair.question)
         p_b = build_prompt(cfg.prompt.target_template, pair.baseline_context, pair.question)
         p_f = build_prompt(cfg.prompt.target_template, pair.fragweave_context, pair.question)
@@ -121,14 +131,24 @@ def main() -> None:
     fig.savefig(out_dir / "layer_heatmap.png", dpi=180)
     plt.close(fig)
 
+    elapsed_s = time.perf_counter() - start
     stats = {
         "n_pairs": len(pairs),
         "n_layers": int(base_dist.shape[1]),
         "baseline_overall_mean_distance": float(base_dist.mean()),
         "fragweave_overall_mean_distance": float(fw_dist.mean()),
+        "pairing_diagnostics": {
+            "rows_seen_for_variant": diag.rows_seen_for_variant,
+            "grouped_sample_ids": diag.grouped_sample_ids,
+            "complete_pairs": diag.complete_pairs,
+            "used_pairs": diag.used_pairs,
+            "skipped_missing_fields": diag.skipped_missing_fields,
+            "variant_hint": diag.short_variant_hint(),
+        },
+        "elapsed_seconds": elapsed_s,
     }
     (out_dir / "layer_trajectory_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    log_line(out_dir, f"Done: n_pairs={len(pairs)} n_layers={base_dist.shape[1]}")
+    log_line(out_dir, f"Done: n_pairs={len(pairs)} n_layers={base_dist.shape[1]} elapsed_seconds={elapsed_s:.2f}")
 
 
 if __name__ == "__main__":

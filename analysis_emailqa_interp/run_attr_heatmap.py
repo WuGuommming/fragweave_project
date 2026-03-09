@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import argparse
-import sys
-from pathlib import Path
-
-if __package__ is None or __package__ == "":
-    sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import csv
 import json
+import sys
+import time
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
+from tqdm.auto import tqdm
+
+if __package__ is None or __package__ == "":
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from analysis_emailqa_interp.common import (
     DEFAULT_CONFIG_PATH,
@@ -24,7 +25,7 @@ from analysis_emailqa_interp.common import (
     find_sections,
     load_analysis_stack,
     log_line,
-    pair_rows,
+    pair_rows_with_diagnostics,
     read_jsonl,
     save_run_config,
     set_seed,
@@ -56,6 +57,16 @@ def locate_span(text: str, needle: str) -> Tuple[int, int] | None:
     if idx < 0:
         return None
     return (idx, idx + len(needle))
+
+
+def choose_target_text(pair) -> Tuple[str, str]:
+    target_response = str(pair.fragweave_row.get("target_response") or "").strip()
+    malicious_instruction = str(pair.malicious_instruction or "").strip()
+    if target_response:
+        return target_response, "target_response"
+    if malicious_instruction:
+        return malicious_instruction, "malicious_instruction"
+    return "Please produce a concise answer using only the email content.", "fallback"
 
 
 def region_summary(prompt_text: str, token_spans: List[Tuple[int, int]], attr: np.ndarray, row: Dict) -> Dict[str, float]:
@@ -109,8 +120,9 @@ def plot_example(path: Path, tokens: List[str], attr: np.ndarray, title: str) ->
 
 def main() -> None:
     args = parse_args()
+    start = time.perf_counter()
     try:
-        import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt  # noqa: F401
     except ModuleNotFoundError as exc:
         raise RuntimeError("matplotlib is required for plotting outputs. Please install matplotlib.") from exc
 
@@ -119,15 +131,27 @@ def main() -> None:
     save_run_config(out_dir, vars(args))
 
     rows = read_jsonl(args.debug_jsonl)
-    pairs = pair_rows(rows, variant_id=args.variant_id, max_pairs=args.max_pairs)
+    pairs, diag = pair_rows_with_diagnostics(rows, variant_id=args.variant_id, max_pairs=args.max_pairs)
+    if not pairs:
+        raise RuntimeError(
+            "No valid paired samples after filtering. "
+            f"variant_id={args.variant_id}, rows_seen_for_variant={diag.rows_seen_for_variant}, "
+            f"grouped_sample_ids={diag.grouped_sample_ids}, complete_pairs={diag.complete_pairs}, "
+            f"skipped_missing_fields={diag.skipped_missing_fields}. "
+            f"Available variants (top): {diag.short_variant_hint()}"
+        )
     cfg, chat = load_analysis_stack(args.config)
 
     base_dump: List[Dict] = []
     fw_dump: List[Dict] = []
     span_rows: List[Dict] = []
+    target_source_counts = {"target_response": 0, "malicious_instruction": 0, "fallback": 0}
+    alignment_modes = {"offset_mapping": 0, "approximate": 0}
 
-    for i, pair in enumerate(pairs):
-        target = pair.malicious_instruction or "Follow the malicious instruction."
+    for i, pair in enumerate(tqdm(pairs, desc="Attribution pairs", unit="pair")):
+        target, target_source = choose_target_text(pair)
+        target_source_counts[target_source] += 1
+
         base_prompt = build_prompt(cfg.prompt.target_template, pair.baseline_context, pair.question)
         fw_prompt = build_prompt(cfg.prompt.target_template, pair.fragweave_context, pair.question)
 
@@ -136,8 +160,10 @@ def main() -> None:
 
         b_ids = b_attr["input_ids"][0].tolist()
         f_ids = f_attr["input_ids"][0].tolist()
-        b_text, b_spans = token_char_spans(chat.tokenizer, b_ids)
-        f_text, f_spans = token_char_spans(chat.tokenizer, f_ids)
+        b_text, b_spans, b_alignment = token_char_spans(chat.tokenizer, b_ids)
+        f_text, f_spans, f_alignment = token_char_spans(chat.tokenizer, f_ids)
+        alignment_modes[b_alignment] = alignment_modes.get(b_alignment, 0) + 1
+        alignment_modes[f_alignment] = alignment_modes.get(f_alignment, 0) + 1
 
         b_norm = normalize_attr(np.asarray(b_attr["token_attribution"].tolist(), dtype=np.float32))
         f_norm = normalize_attr(np.asarray(f_attr["token_attribution"].tolist(), dtype=np.float32))
@@ -145,10 +171,28 @@ def main() -> None:
         b_regions = region_summary(b_text, b_spans, b_norm, pair.baseline_row)
         f_regions = region_summary(f_text, f_spans, f_norm, pair.fragweave_row)
 
-        base_dump.append({"sample_id": pair.sample_id, "tokens": b_attr["token_text"], "attr": b_norm.tolist()})
-        fw_dump.append({"sample_id": pair.sample_id, "tokens": f_attr["token_text"], "attr": f_norm.tolist()})
+        base_dump.append(
+            {
+                "sample_id": pair.sample_id,
+                "tokens": b_attr["token_text"],
+                "attr": b_norm.tolist(),
+                "target_text": target,
+                "target_source": target_source,
+                "char_alignment_mode": b_alignment,
+            }
+        )
+        fw_dump.append(
+            {
+                "sample_id": pair.sample_id,
+                "tokens": f_attr["token_text"],
+                "attr": f_norm.tolist(),
+                "target_text": target,
+                "target_source": target_source,
+                "char_alignment_mode": f_alignment,
+            }
+        )
 
-        row = {"sample_id": pair.sample_id}
+        row = {"sample_id": pair.sample_id, "target_source": target_source}
         for k in sorted(set(b_regions) | set(f_regions)):
             row[f"baseline_{k}"] = b_regions.get(k, 0.0)
             row[f"fragweave_{k}"] = f_regions.get(k, 0.0)
@@ -197,14 +241,26 @@ def main() -> None:
     fig.savefig(out_dir / "heatmap_span_summary.png", dpi=180)
     plt.close(fig)
 
+    elapsed_s = time.perf_counter() - start
     stats = {
         "n_pairs": len(pairs),
         "method": args.method,
+        "pairing_diagnostics": {
+            "rows_seen_for_variant": diag.rows_seen_for_variant,
+            "grouped_sample_ids": diag.grouped_sample_ids,
+            "complete_pairs": diag.complete_pairs,
+            "used_pairs": diag.used_pairs,
+            "skipped_missing_fields": diag.skipped_missing_fields,
+            "variant_hint": diag.short_variant_hint(),
+        },
+        "target_source_counts": target_source_counts,
+        "char_alignment_mode_counts": alignment_modes,
         "baseline_injection_like_mean": float(np.mean([r.get("baseline_injection_like", 0.0) for r in span_rows])),
         "fragweave_injection_like_mean": float(np.mean([r.get("fragweave_injection_like", 0.0) for r in span_rows])),
+        "elapsed_seconds": elapsed_s,
     }
     (out_dir / "attribution_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    log_line(out_dir, f"Done: n_pairs={len(pairs)} method={args.method}")
+    log_line(out_dir, f"Done: n_pairs={len(pairs)} method={args.method} elapsed_seconds={elapsed_s:.2f}")
 
 
 if __name__ == "__main__":

@@ -7,3 +7,5 @@ pandas
 tqdm
 pyyaml
 huggingface_hub
+matplotlib
+scikit-learn

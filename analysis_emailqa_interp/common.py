@@ -31,6 +31,24 @@ class PairedSample:
     fragweave_row: Dict[str, Any]
 
 
+
+@dataclass
+class PairingDiagnostics:
+    variant_counts: Dict[str, int]
+    rows_seen_for_variant: int
+    grouped_sample_ids: int
+    complete_pairs: int
+    used_pairs: int
+    skipped_missing_fields: int
+
+    def short_variant_hint(self, top_k: int = 8) -> str:
+        if not self.variant_counts:
+            return "no variants found in debug file"
+        top = sorted(self.variant_counts.items(), key=lambda x: (-x[1], x[0]))[:top_k]
+        return ", ".join(f"{k}({v})" for k, v in top)
+
+
+
 def ensure_dir(path: str | Path) -> Path:
     p = Path(path)
     p.mkdir(parents=True, exist_ok=True)
@@ -78,6 +96,17 @@ def _get_baseline_context(row: Dict[str, Any]) -> str:
 
 
 def _get_fragweave_context(row: Dict[str, Any]) -> str:
+    return str(
+        row.get("poisoned_context")
+        or row.get("shadow_context")
+        or row.get("context")
+        or row.get("cleaned_context")
+        or ""
+    )
+
+
+def pair_rows_with_diagnostics(
+=======
     return str(row.get("context") or row.get("cleaned_context") or "")
 
 
@@ -86,17 +115,28 @@ def pair_rows(
     *,
     variant_id: str,
     max_pairs: int,
-) -> List[PairedSample]:
+) -> Tuple[List[PairedSample], PairingDiagnostics]:
     grouped: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    variant_counts: Dict[str, int] = {}
+    rows_seen_for_variant = 0
 
     for row in rows:
-        if str(row.get("variant_id", "")) != variant_id:
+        vid = str(row.get("variant_id", ""))
+        if vid:
+            variant_counts[vid] = variant_counts.get(vid, 0) + 1
+        if vid != variant_id:
             continue
+
+        rows_seen_for_variant += 1
         sample_id = str(row.get("sample_id", ""))
         if not sample_id:
             continue
         slot = "baseline" if bool(row.get("is_direct_baseline")) else "fragweave"
         grouped.setdefault(sample_id, {})[slot] = row
+
+    grouped_sample_ids = len(grouped)
+    complete_pairs = sum(1 for pair in grouped.values() if "baseline" in pair and "fragweave" in pair)
+    skipped_missing_fields = 0
 
     pairs: List[PairedSample] = []
     for sample_id in sorted(grouped.keys()):
@@ -106,13 +146,12 @@ def pair_rows(
         base = pair["baseline"]
         fw = pair["fragweave"]
         question = str(fw.get("question") or base.get("question") or "")
-        malicious_instruction = str(
-            fw.get("malicious_instruction") or base.get("malicious_instruction") or ""
-        )
+        malicious_instruction = str(fw.get("malicious_instruction") or base.get("malicious_instruction") or "")
         original_context = _get_original_context(fw) or _get_original_context(base)
         baseline_context = _get_baseline_context(base)
         fragweave_context = _get_fragweave_context(fw)
         if not (question and original_context and baseline_context and fragweave_context):
+            skipped_missing_fields += 1
             continue
         pairs.append(
             PairedSample(
@@ -129,9 +168,31 @@ def pair_rows(
         if len(pairs) >= max_pairs:
             break
 
+    diag = PairingDiagnostics(
+        variant_counts=variant_counts,
+        rows_seen_for_variant=rows_seen_for_variant,
+        grouped_sample_ids=grouped_sample_ids,
+        complete_pairs=complete_pairs,
+        used_pairs=len(pairs),
+        skipped_missing_fields=skipped_missing_fields,
+    )
+    return pairs, diag
+
+
+def pair_rows(
+    rows: Iterable[Dict[str, Any]],
+    *,
+    variant_id: str,
+    max_pairs: int,
+) -> List[PairedSample]:
+    pairs, diag = pair_rows_with_diagnostics(rows, variant_id=variant_id, max_pairs=max_pairs)
     if not pairs:
         raise RuntimeError(
-            f"No valid paired samples found for variant_id={variant_id}."
+            "No valid paired samples found. "
+            f"variant_id={variant_id}, rows_seen_for_variant={diag.rows_seen_for_variant}, "
+            f"grouped_sample_ids={diag.grouped_sample_ids}, complete_pairs={diag.complete_pairs}, "
+            f"skipped_missing_fields={diag.skipped_missing_fields}. "
+            f"Available variants (top): {diag.short_variant_hint()}"
         )
     return pairs
 
@@ -150,19 +211,53 @@ def to_numpy(v: torch.Tensor) -> np.ndarray:
     return v.detach().cpu().float().numpy()
 
 
-def token_char_spans(tokenizer: Any, input_ids: List[int]) -> Tuple[str, List[Tuple[int, int]]]:
-    pieces = [
-        tokenizer.decode([tid], skip_special_tokens=False, clean_up_tokenization_spaces=False)
-        for tid in input_ids
-    ]
-    merged = "".join(pieces)
+def token_char_spans(tokenizer: Any, input_ids: List[int]) -> Tuple[str, List[Tuple[int, int]], str]:
+    """Return decoded prompt text and per-token character spans.
+
+    Alignment mode is "offset_mapping" when exact offsets are available from a fast tokenizer,
+    otherwise "approximate" using conservative token-string matching against decoded text.
+    """
+    decoded_text = tokenizer.decode(input_ids, skip_special_tokens=False, clean_up_tokenization_spaces=False)
+
+    if getattr(tokenizer, "is_fast", False):
+        try:
+            enc = tokenizer(
+                decoded_text,
+                return_offsets_mapping=True,
+                add_special_tokens=False,
+            )
+            offsets = enc.get("offset_mapping")
+            if offsets and isinstance(offsets, list):
+                spans = [(int(s), int(e)) for s, e in offsets]
+                if len(spans) == len(input_ids):
+                    return decoded_text, spans, "offset_mapping"
+        except Exception:
+            pass
+
+    tokens = tokenizer.convert_ids_to_tokens(input_ids)
     spans: List[Tuple[int, int]] = []
     cursor = 0
-    for piece in pieces:
-        nxt = cursor + len(piece)
-        spans.append((cursor, nxt))
-        cursor = nxt
-    return merged, spans
+    text_low = decoded_text.lower()
+    for tok in tokens:
+        norm = str(tok).replace("▁", " ").replace("Ġ", " ").replace("##", "")
+        norm = norm.replace("Ċ", "\n")
+        if not norm:
+            spans.append((cursor, cursor))
+            continue
+
+        idx = text_low.find(norm.lower(), cursor)
+        if idx < 0:
+            nxt = min(len(decoded_text), cursor + max(1, len(norm)))
+            spans.append((cursor, nxt))
+            cursor = nxt
+        else:
+            end = min(len(decoded_text), idx + len(norm))
+            spans.append((idx, end))
+            cursor = end
+
+    if len(spans) != len(input_ids):
+        spans = spans[: len(input_ids)] + [(cursor, cursor)] * max(0, len(input_ids) - len(spans))
+    return decoded_text, spans, "approximate"
 
 
 def find_sections(prompt_text: str) -> Dict[str, Tuple[int, int]]:
@@ -182,4 +277,3 @@ def find_sections(prompt_text: str) -> Dict[str, Tuple[int, int]]:
     if a_idx >= 0:
         sections["answer_prefix"] = (a_idx, len(prompt_text))
     return sections
-

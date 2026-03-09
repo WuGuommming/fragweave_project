@@ -83,17 +83,41 @@ class HFChat:
         return txt.strip()
 
     def build_model_inputs(self, prompt: str, add_generation_prompt: bool = False) -> Dict[str, Any]:
-        """Tokenize a prompt with the same chat-template behavior used by generate()."""
+        """Tokenize a prompt with chat-template compatibility fallbacks across transformers versions."""
         if hasattr(self.tokenizer, "apply_chat_template"):
             messages = [{"role": "user", "content": prompt}]
-            enc = self.tokenizer.apply_chat_template(
-                messages,
-                add_generation_prompt=add_generation_prompt,
-                return_dict=True,
-                return_tensors="pt",
-            )
-            input_ids = enc["input_ids"]
-            attention_mask = enc.get("attention_mask", torch.ones_like(input_ids))
+            input_ids = None
+            attention_mask = None
+
+            try:
+                enc = self.tokenizer.apply_chat_template(
+                    messages,
+                    add_generation_prompt=add_generation_prompt,
+                    return_dict=True,
+                    return_tensors="pt",
+                )
+                if isinstance(enc, dict):
+                    input_ids = enc.get("input_ids")
+                    attention_mask = enc.get("attention_mask")
+            except TypeError:
+                enc = None
+
+            if input_ids is None:
+                enc = self.tokenizer.apply_chat_template(
+                    messages,
+                    add_generation_prompt=add_generation_prompt,
+                    return_tensors="pt",
+                )
+                if isinstance(enc, torch.Tensor):
+                    input_ids = enc
+                elif isinstance(enc, dict) and "input_ids" in enc:
+                    input_ids = enc["input_ids"]
+                    attention_mask = enc.get("attention_mask")
+                else:
+                    raise RuntimeError("Unsupported output format from tokenizer.apply_chat_template")
+
+            if attention_mask is None:
+                attention_mask = torch.ones_like(input_ids)
         else:
             enc = self.tokenizer(prompt, return_tensors="pt")
             input_ids = enc.input_ids
