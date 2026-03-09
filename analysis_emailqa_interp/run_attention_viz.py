@@ -5,7 +5,7 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 from tqdm.auto import tqdm
@@ -44,6 +44,15 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
+def locate_span(text: str, needle: str) -> Tuple[int, int] | None:
+    if not needle:
+        return None
+    idx = text.find(needle)
+    if idx < 0:
+        return None
+    return (idx, idx + len(needle))
+
+
 def summarize_prompt_tail_attention(chat, prompt: str, tail_tokens: int) -> Dict[str, np.ndarray | str]:
     enc = chat.encode_prompt_states(prompt, add_generation_prompt=True, output_attentions=True)
     atts = np.stack([a.numpy()[0] for a in enc["attentions"]])
@@ -60,12 +69,21 @@ def summarize_prompt_tail_attention(chat, prompt: str, tail_tokens: int) -> Dict
     }
 
 
-def section_vector(prompt_text: str, token_spans: np.ndarray, score: np.ndarray) -> Dict[str, float]:
+def section_vector(prompt_text: str, token_spans: np.ndarray, score: np.ndarray, row: Dict) -> Dict[str, float]:
     sections = find_sections(prompt_text)
-    out = {"question": 0.0, "main_context": 0.0, "other": 0.0}
+    frag_spans = [locate_span(prompt_text, str(s)) for s in (row.get("shards") or [])]
+    guide_spans = [locate_span(prompt_text, str(s)) for s in (row.get("guidance") or [])]
+    inj_span = locate_span(prompt_text, str(row.get("malicious_instruction") or ""))
+    out = {"question": 0.0, "main_context": 0.0, "injection_like": 0.0, "other": 0.0}
     for i, (st, ed) in enumerate(token_spans.tolist()):
         label = "other"
-        if "question" in sections and st >= sections["question"][0] and ed <= sections["question"][1]:
+        if inj_span and st >= inj_span[0] and ed <= inj_span[1]:
+            label = "injection_like"
+        elif any(span and st >= span[0] and ed <= span[1] for span in frag_spans):
+            label = "injection_like"
+        elif any(span and st >= span[0] and ed <= span[1] for span in guide_spans):
+            label = "injection_like"
+        elif "question" in sections and st >= sections["question"][0] and ed <= sections["question"][1]:
             label = "question"
         elif "main_context" in sections and st >= sections["main_context"][0] and ed <= sections["main_context"][1]:
             label = "main_context"
@@ -112,8 +130,8 @@ def main() -> None:
 
         base_scores.append(np.asarray(b["prompt_tail_to_input_attention"]))
         fw_scores.append(np.asarray(f["prompt_tail_to_input_attention"]))
-        base_sections.append(section_vector(str(b["prompt_text"]), np.asarray(b["token_spans"]), np.asarray(b["prompt_tail_to_input_attention"])))
-        fw_sections.append(section_vector(str(f["prompt_text"]), np.asarray(f["token_spans"]), np.asarray(f["prompt_tail_to_input_attention"])))
+        base_sections.append(section_vector(str(b["prompt_text"]), np.asarray(b["token_spans"]), np.asarray(b["prompt_tail_to_input_attention"]), pair.baseline_row))
+        fw_sections.append(section_vector(str(f["prompt_text"]), np.asarray(f["token_spans"]), np.asarray(f["prompt_tail_to_input_attention"]), pair.fragweave_row))
         alignment_modes[str(b["char_alignment_mode"])] = alignment_modes.get(str(b["char_alignment_mode"]), 0) + 1
         alignment_modes[str(f["char_alignment_mode"])] = alignment_modes.get(str(f["char_alignment_mode"]), 0) + 1
 
@@ -124,20 +142,23 @@ def main() -> None:
     np.save(out_dir / "prompt_attention_summary_baseline.npy", base_trim)
     np.save(out_dir / "prompt_attention_summary_fragweave.npy", fw_trim)
 
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.plot(base_trim.mean(axis=0), label="baseline")
-    ax.plot(fw_trim.mean(axis=0), label="fragweave")
-    ax.set_title("Prompt-tail aggregated attention to prompt tokens")
-    ax.set_xlabel("Prompt token index (trimmed)")
-    ax.set_ylabel("Attention mass")
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(out_dir / "prompt_tail_attention_plot.png", dpi=180)
-    plt.close(fig)
-
-    labels = ["main_context", "question", "other"]
+    labels = ["main_context", "question", "injection_like", "other"]
     base_vec = np.array([np.mean([x[l] for x in base_sections]) for l in labels])
     fw_vec = np.array([np.mean([x[l] for x in fw_sections]) for l in labels])
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    x = np.arange(len(labels))
+    w = 0.35
+    ax.bar(x - w / 2, base_vec, width=w, label="baseline")
+    ax.bar(x + w / 2, fw_vec, width=w, label="fragweave")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=25, ha="right")
+    ax.set_ylabel("Normalized attention mass")
+    ax.set_title("Prompt attention by section")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(out_dir / "section_attention_barplot.png", dpi=180)
+    plt.close(fig)
 
     mat = np.stack([base_vec, fw_vec])
     fig, ax = plt.subplots(figsize=(5, 3))
@@ -149,7 +170,7 @@ def main() -> None:
     ax.set_title("Prompt-side attention by prompt section")
     fig.colorbar(im, ax=ax)
     fig.tight_layout()
-    fig.savefig(out_dir / "prompt_attention_span_heatmap.png", dpi=180)
+    fig.savefig(out_dir / "section_attention_heatmap.png", dpi=180)
     plt.close(fig)
 
     elapsed_s = time.perf_counter() - start

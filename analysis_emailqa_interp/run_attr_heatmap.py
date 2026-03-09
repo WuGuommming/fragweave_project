@@ -41,6 +41,7 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--max-pairs", type=int, default=DEFAULT_MAX_PAIRED)
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
     ap.add_argument("--method", choices=["grad_x_input", "integrated_gradients"], default="grad_x_input")
+    ap.add_argument("--token-examples", type=int, default=0)
     ap.add_argument("--out-dir", default="analysis_emailqa_interp/outputs/attr_heatmap")
     return ap.parse_args()
 
@@ -75,7 +76,7 @@ def region_summary(prompt_text: str, token_spans: List[Tuple[int, int]], attr: n
     guide_spans = [locate_span(prompt_text, str(s)) for s in (row.get("guidance") or [])]
     inj_span = locate_span(prompt_text, str(row.get("malicious_instruction") or ""))
 
-    out = {"question": 0.0, "main_context": 0.0, "guidance": 0.0, "injection_like": 0.0, "other": 0.0}
+    out = {"question": 0.0, "main_context": 0.0, "injection_like": 0.0, "other": 0.0}
     for i, (st, ed) in enumerate(token_spans):
         val = float(attr[i])
         label = "other"
@@ -84,7 +85,7 @@ def region_summary(prompt_text: str, token_spans: List[Tuple[int, int]], attr: n
         elif any(span and st >= span[0] and ed <= span[1] for span in frag_spans):
             label = "injection_like"
         elif any(span and st >= span[0] and ed <= span[1] for span in guide_spans):
-            label = "guidance"
+            label = "injection_like"
         elif "question" in sections and st >= sections["question"][0] and ed <= sections["question"][1]:
             label = "question"
         elif "main_context" in sections and st >= sections["main_context"][0] and ed <= sections["main_context"][1]:
@@ -99,6 +100,18 @@ def save_token_lines(path: Path, payloads: List[Dict]) -> None:
     with path.open("w", encoding="utf-8") as f:
         for item in payloads:
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+
+def concentration_metrics(region_dist: Dict[str, float], top_k: int = 2) -> Dict[str, float]:
+    values = np.asarray(sorted(region_dist.values(), reverse=True), dtype=np.float64)
+    values = values / (values.sum() + 1e-12)
+    entropy = -float(np.sum(values * np.log(values + 1e-12)) / np.log(len(values) + 1e-12))
+    return {
+        "top2_concentration": float(values[:top_k].sum()),
+        "section_entropy": entropy,
+        "outside_injection_like": float(1.0 - region_dist.get("injection_like", 0.0)),
+        "hhi": float(np.sum(values**2)),
+    }
 
 
 def plot_example(path: Path, tokens: List[str], attr: np.ndarray, title: str) -> None:
@@ -198,7 +211,7 @@ def main() -> None:
             row[f"fragweave_{k}"] = f_regions.get(k, 0.0)
         span_rows.append(row)
 
-        if i < 3:
+        if i < args.token_examples:
             plot_example(
                 out_dir / f"heatmap_token_example_{pair.sample_id}_baseline.png",
                 b_attr["token_text"],
@@ -235,10 +248,31 @@ def main() -> None:
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=30, ha="right")
     ax.set_ylabel("Normalized attribution")
-    ax.set_title("Span-level attribution summary")
+    ax.set_title("Section-level attribution summary")
     ax.legend()
     fig.tight_layout()
-    fig.savefig(out_dir / "heatmap_span_summary.png", dpi=180)
+    fig.savefig(out_dir / "section_attr_barplot.png", dpi=180)
+    plt.close(fig)
+
+    base_metrics = [concentration_metrics({k.replace("baseline_", ""): r[k] for k in baseline_cols}) for r in span_rows]
+    fw_metrics = [concentration_metrics({k.replace("fragweave_", ""): r[k] for k in frag_cols}) for r in span_rows]
+
+    metric_labels = ["top2_concentration", "section_entropy", "outside_injection_like", "hhi"]
+    base_metric_mean = np.array([np.mean([m[k] for m in base_metrics]) for k in metric_labels])
+    fw_metric_mean = np.array([np.mean([m[k] for m in fw_metrics]) for k in metric_labels])
+
+    fig, ax = plt.subplots(figsize=(8, 4))
+    x = np.arange(len(metric_labels))
+    w = 0.35
+    ax.bar(x - w / 2, base_metric_mean, width=w, label="baseline")
+    ax.bar(x + w / 2, fw_metric_mean, width=w, label="fragweave")
+    ax.set_xticks(x)
+    ax.set_xticklabels(metric_labels, rotation=20, ha="right")
+    ax.set_ylabel("Metric value")
+    ax.set_title("Attribution concentration and dispersion")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(out_dir / "attribution_concentration_plot.png", dpi=180)
     plt.close(fig)
 
     elapsed_s = time.perf_counter() - start
@@ -257,6 +291,8 @@ def main() -> None:
         "char_alignment_mode_counts": alignment_modes,
         "baseline_injection_like_mean": float(np.mean([r.get("baseline_injection_like", 0.0) for r in span_rows])),
         "fragweave_injection_like_mean": float(np.mean([r.get("fragweave_injection_like", 0.0) for r in span_rows])),
+        "baseline_metric_means": {k: float(np.mean([m[k] for m in base_metrics])) for k in metric_labels},
+        "fragweave_metric_means": {k: float(np.mean([m[k] for m in fw_metrics])) for k in metric_labels},
         "elapsed_seconds": elapsed_s,
     }
     (out_dir / "attribution_stats.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")

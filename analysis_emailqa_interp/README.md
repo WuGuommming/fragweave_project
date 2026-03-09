@@ -8,11 +8,18 @@ Default data source:
 Default config source:
 - `configs/emailqa_with_localization_and_sanitization.yaml`
 
-Scripts:
-- `run_repr_prompt.py`: prompt-side representation projection and centroid similarity.
-- `run_attr_heatmap.py`: token/span attribution heatmaps using target malicious instruction scoring.
-- `run_layer_trajectory.py`: layer-wise distance trajectories to original prompt states.
-- `run_attention_viz.py`: attention summaries for tail query attention and section-level focus.
+Core scripts:
+- `run_attr_heatmap.py`: distributed attribution analysis with section-level summaries and concentration/dispersion metrics.
+- `run_repr_prompt.py`: local span representation analysis for baseline injection spans, FragWeave woven spans, and benign carrier spans.
+- `run_attention_viz.py`: auxiliary prompt-side aggregated attention summaries by section.
+
+Deprecated/removed:
+- `run_layer_trajectory.py`: removed from the paper-oriented pipeline.
 
 Each script is runnable with no arguments and writes outputs under:
 - `analysis_emailqa_interp/outputs/<method_name>/`
+
+The default output directories for the active pipeline are:
+- `analysis_emailqa_interp/outputs/attr_heatmap/`
+- `analysis_emailqa_interp/outputs/repr_prompt/`
+- `analysis_emailqa_interp/outputs/attention_viz/`
