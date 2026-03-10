@@ -1,0 +1,12 @@
+{
+  "num_samples": 50,
+  "variant": "original",
+  "asr": 0.1,
+  "localization_f1": 0.06412380179501675,
+  "asr_after_sanitize": 0.0,
+  "task_accuracy": null,
+  "task_accuracy_after_sanitize": null,
+  "direct_baseline_asr": 0.26,
+  "direct_baseline_localization_f1": 0.8667958372260322,
+  "direct_baseline_asr_after_sanitize": 0.0
+}
