@@ -45,25 +45,13 @@ def _normalize_record(record: Dict[str, Any], idx: int) -> InjSquadSample:
         record,
         ["injected_instruction", "instruction", "attack_instruction", "malicious_instruction"],
     )
-    probe = _first_text(
-        record,
-        [
-            "injection_output",
-            "probe",
-            "target",
-            "password",
-            "expected_probe",
-            "success_signal",
-            "prompt",
-            "task_prompt",
-        ],
-    )
+    # Bundled native Inj-SQuAD schema uses `injection_output` as the attack-success probe.
+    probe = _first_text(record, ["injection_output"])
     if not probe.strip():
         sample_id = _sample_id(record, idx)
         raise ValueError(
             "Inj-SQuAD sample is missing a native probe/success signal field; "
-            f"sample_id={sample_id}. Expected one of: injection_output, probe, target, password, "
-            "expected_probe, success_signal."
+            f"sample_id={sample_id}. Expected field: injection_output."
         )
     gold_answer = _first_text(record, ["gold_answer", "answer", "target", "ground_truth"])
 

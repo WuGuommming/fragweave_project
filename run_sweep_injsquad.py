@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 from fragweave.attacks.sharder import shard_with_llm
-from fragweave.attacks.weaver import WeaveOp, apply_weave, enumerate_weavable_sentences
+from fragweave.attacks.weaver import WeaveOp, apply_weave_with_shadow, enumerate_weavable_sentences
 from fragweave.benchmarks.injsquad import InjSquadSample, load_injsquad_samples, to_attack_input
 from fragweave.benchmarks.injsquad.paths import (
     INJSQUAD_BENCHMARK_NAME,
@@ -140,7 +140,7 @@ def _build_fragweave_attack(sample: InjSquadSample, run_cfg: RunConfig, seed: in
     )
 
     ops = _choose_ops(sample.clean_document, shard_result.shards, seed)
-    attacked_context, weave_debug = apply_weave(
+    attacked_context, attacked_context_shadow, weave_debug = apply_weave_with_shadow(
         weaver,
         sample.clean_document,
         ops,
@@ -151,6 +151,10 @@ def _build_fragweave_attack(sample: InjSquadSample, run_cfg: RunConfig, seed: in
 
     attack_input = to_attack_input(sample)
     attack_input["attacked_context"] = attacked_context
+    attack_input["attacked_context_shadow"] = attacked_context_shadow
+    attack_input["attack_metadata"] = {
+        "injection_units": shard_result.shards,
+    }
     attack_input["attack_debug"] = {
         "method": "fragweave",
         "k": k,
