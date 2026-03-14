@@ -1,0 +1,13 @@
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:02<00:06,  2.10s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:03<00:03,  1.97s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:05<00:01,  1.94s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.90s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:07<00:00,  1.93s/it]
+Traceback (most recent call last):
+  File "/home/gwu3/code/fragweave_project/run_sweep_injsquad.py", line 370, in <module>
+    main()
+  File "/home/gwu3/code/fragweave_project/run_sweep_injsquad.py", line 283, in main
+    row = _build_fragweave_attack(sample, run_cfg, row_seed, sharder, weaver)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/run_sweep_injsquad.py", line 132, in _build_fragweave_attack
+    shard_result = shard_with_llm(
+                   ^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/attacks/sharder.py", line 103, in shard_with_llm
+    raise ValueError("sharder prompt template is required from YAML (attack.sharder_prompt).")
+ValueError: sharder prompt template is required from YAML (attack.sharder_prompt).
