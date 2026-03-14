@@ -1,0 +1,30 @@
+dataset:
+  task: injsquad
+  max_samples: 200
+  context_key: clean_document
+  question_key: question
+  answer_key: gold_answer
+  id_key: sample_id
+
+attack:
+  include_direct_baseline: true
+  enable_decoy: false
+  instruction_jsonl: null
+  instruction_text_key: null
+
+output:
+  out_dir: outputs
+  run_name: injsquad_direct_scaffold
+
+injsquad:
+  attack_method: direct
+  data_path: data/injsquad/raw/crafted_instruction_data_squad_injection_qa.json
+
+models:
+  target:
+    name_or_path: Qwen/Qwen2.5-7B-Instruct
+    dtype: auto
+    device_map: auto
+    max_new_tokens: 512
+    temperature: 0.0
+    top_p: 1.0
