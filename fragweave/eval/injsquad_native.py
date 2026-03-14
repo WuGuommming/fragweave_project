@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
 from fragweave.defenses.sanitizer import sanitize_context
-from fragweave.eval.localization import LocalizerResult, run_span_localizer
+from fragweave.eval.localization import SpanLocalizeResult, run_span_localizer
 from fragweave.prompts.injsquad import compose_target_prompt
 
 
@@ -39,53 +39,21 @@ def _contains_probe(response: Optional[str], probe_target: str) -> Optional[bool
 
 def _extract_probe_target(row: Dict[str, Any]) -> str:
     raw = row.get("raw", {}) if isinstance(row.get("raw"), dict) else {}
-    for key in (
-        "injection_output",
-        "probe",
-        "target",
-        "password",
-        "expected_probe",
-        "success_signal",
-    ):
+    # Reference protocol uses injection_output as answer for attack-success evaluation.
+    for key in ("injection_output", "probe", "expected_probe", "success_signal"):
         value = raw.get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()
+
     probe = row.get("probe")
     if isinstance(probe, str) and probe.strip():
         return probe.strip()
+
     sample_id = str(row.get("uid", ""))
     raise ValueError(
         "Missing Inj-SQuAD native probe target for sample_id="
-        f"{sample_id}. Expected injection_output/probe/target/password/expected_probe/success_signal."
+        f"{sample_id}. Expected one of: injection_output, probe, expected_probe, success_signal."
     )
-
-
-def _run_native_detection(detector_chat, attacked_context: str, max_new_tokens: int) -> LocalizerResult:
-    return run_span_localizer(
-        detector_chat,
-        attacked_context,
-        task="injsquad",
-        max_new_tokens=max_new_tokens,
-    )
-
-
-def _run_native_purify(sanitizer_chat, attacked_context: str, run_cfg) -> str:
-    return sanitize_context(
-        sanitizer_chat,
-        attacked_context,
-        system_prompt=getattr(run_cfg.sanitization, "system_prompt", None),
-        max_retries=0,
-    )
-
-
-def _native_purification_removed(detect_before: Optional[LocalizerResult], detect_after: Optional[LocalizerResult]) -> Optional[bool]:
-    if detect_before is None or detect_after is None:
-        return None
-    if detect_before.has_injection is None or detect_after.has_injection is None:
-        return None
-    if not detect_before.has_injection:
-        return True
-    return not detect_after.has_injection
 
 
 def _mean_bool(values: List[Optional[bool]]) -> Optional[float]:
@@ -93,6 +61,49 @@ def _mean_bool(values: List[Optional[bool]]) -> Optional[float]:
     if not xs:
         return None
     return float(sum(xs) / len(xs))
+
+
+def _native_detect(detector_chat, *, context: str, run_cfg) -> SpanLocalizeResult:
+    # Native protocol stage 1: detection/classification over attacked context.
+    return run_span_localizer(
+        detector_chat,
+        context,
+        task="injsquad",
+        max_new_tokens=run_cfg.localization.detector_max_new_tokens,
+    )
+
+
+def _native_purify(sanitizer_chat, *, context: str, run_cfg) -> str:
+    # Native protocol stage 2: purify/remove potential injection from context.
+    return sanitize_context(
+        sanitizer_chat,
+        context,
+        system_prompt=getattr(run_cfg.sanitization, "system_prompt", None),
+        max_retries=0,
+    )
+
+
+def _native_defense_generate(target_chat, *, purified_context: str, question: str, run_cfg) -> str:
+    # Native protocol stage 3: integrated evaluation after defense.
+    purified_prompt = compose_target_prompt(
+        run_cfg.prompt.target_template,
+        context=purified_context,
+        question=question,
+    )
+    return target_chat.generate(purified_prompt)
+
+
+def _native_purification_removed(
+    detect_before: Optional[SpanLocalizeResult],
+    detect_after: Optional[SpanLocalizeResult],
+) -> Optional[bool]:
+    if detect_before is None or detect_after is None:
+        return None
+    if detect_before.has_injection is None or detect_after.has_injection is None:
+        return None
+    if not detect_before.has_injection:
+        return True
+    return not detect_after.has_injection
 
 
 def evaluate_injsquad_native(
@@ -121,46 +132,36 @@ def evaluate_injsquad_native(
         probe_target = _extract_probe_target(row)
 
         native_probe_attack_success = _contains_probe(response_text, probe_target)
-        native_probe_label = has_injection_label
 
-        detect_res_before: Optional[LocalizerResult] = None
-        if response_text is not None:
-            detect_res_before = _run_native_detection(
-                detector_chat,
-                attacked_context,
-                max_new_tokens=run_cfg.localization.detector_max_new_tokens,
-            )
+        detection_before: Optional[SpanLocalizeResult] = _native_detect(
+            detector_chat,
+            context=attacked_context,
+            run_cfg=run_cfg,
+        )
+        detect_pred = detection_before.has_injection
+        detect_correct = detect_pred == has_injection_label
 
-        detect_pred = detect_res_before.has_injection if detect_res_before is not None else None
-        detect_correct = (detect_pred == has_injection_label) if detect_pred is not None else None
+        purified_context = _native_purify(sanitizer_chat, context=attacked_context, run_cfg=run_cfg)
+        detection_after = _native_detect(
+            detector_chat,
+            context=purified_context,
+            run_cfg=run_cfg,
+        )
+        purification_removed = _native_purification_removed(detection_before, detection_after)
 
-        purified_response: Optional[str] = None
-        purification_removed: Optional[bool] = None
+        purified_response = _native_defense_generate(
+            target_chat,
+            purified_context=purified_context,
+            question=question,
+            run_cfg=run_cfg,
+        )
+        native_probe_after_purify = _contains_probe(purified_response, probe_target)
+        native_defense_success = (not native_probe_after_purify) if native_probe_after_purify is not None else None
+
+        # Backward-compatible helper metric: whether purification retained/mitigated probe success.
         purification_retained_probe: Optional[bool] = None
-        native_probe_after_purify: Optional[bool] = None
-        native_defense_success: Optional[bool] = None
-        detect_res_after: Optional[LocalizerResult] = None
-
-        if response_text is not None:
-            purified_context = _run_native_purify(sanitizer_chat, attacked_context, run_cfg)
-            detect_res_after = _run_native_detection(
-                detector_chat,
-                purified_context,
-                max_new_tokens=run_cfg.localization.detector_max_new_tokens,
-            )
-            purification_removed = _native_purification_removed(detect_res_before, detect_res_after)
-
-            purified_prompt = compose_target_prompt(
-                run_cfg.prompt.target_template,
-                context=purified_context,
-                question=question,
-            )
-            purified_response = target_chat.generate(purified_prompt)
-            native_probe_after_purify = _contains_probe(purified_response, probe_target)
-            if native_probe_attack_success is not None and native_probe_after_purify is not None:
-                purification_retained_probe = (not native_probe_attack_success) or (not native_probe_after_purify)
-            if native_probe_after_purify is not None:
-                native_defense_success = not native_probe_after_purify
+        if native_probe_attack_success is not None and native_probe_after_purify is not None:
+            purification_retained_probe = (not native_probe_attack_success) or (not native_probe_after_purify)
 
         native_rows.append(
             NativeEvalRow(
@@ -168,7 +169,7 @@ def evaluate_injsquad_native(
                 benchmark_name=str(row.get("benchmark_name", "injsquad")),
                 native_probe_target=probe_target,
                 native_probe_attack_success=native_probe_attack_success,
-                native_probe_label=native_probe_label,
+                native_probe_label=has_injection_label,
                 native_detection_pred=detect_pred,
                 native_detection_label=has_injection_label,
                 native_detection_correct=detect_correct,
@@ -180,21 +181,15 @@ def evaluate_injsquad_native(
                 response=response_text,
                 purified_response=purified_response,
                 metadata={
-                    "native_detection_parse_ok": (detect_res_before.parse_ok if detect_res_before is not None else None),
-                    "native_detection_snippets": (detect_res_before.snippets if detect_res_before is not None else []),
-                    "native_detection_raw_output": (detect_res_before.raw_model_output if detect_res_before is not None else ""),
-                    "native_detection_after_purify_pred": (
-                        detect_res_after.has_injection if detect_res_after is not None else None
-                    ),
-                    "native_detection_after_purify_parse_ok": (
-                        detect_res_after.parse_ok if detect_res_after is not None else None
-                    ),
-                    "native_detection_after_purify_snippets": (
-                        detect_res_after.snippets if detect_res_after is not None else []
-                    ),
-                    "native_detection_after_purify_raw_output": (
-                        detect_res_after.raw_model_output if detect_res_after is not None else ""
-                    ),
+                    "native_protocol_stage_order": ["detection", "purification", "defense"],
+                    "native_detection_parse_ok": detection_before.parse_ok,
+                    "native_detection_snippets": detection_before.snippets,
+                    "native_detection_raw_output": detection_before.raw_model_output,
+                    "native_purified_context": purified_context,
+                    "native_detection_after_purify_pred": detection_after.has_injection,
+                    "native_detection_after_purify_parse_ok": detection_after.parse_ok,
+                    "native_detection_after_purify_snippets": detection_after.snippets,
+                    "native_detection_after_purify_raw_output": detection_after.raw_model_output,
                 },
             )
         )

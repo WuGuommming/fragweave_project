@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from difflib import SequenceMatcher
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from fragweave.eval.localization import merge_spans
+from fragweave.eval.localization import merge_spans, shadow_to_clean_and_spans
 
 
 @dataclass
@@ -93,6 +93,11 @@ def compute_gt_spans(context: str, injected_instruction: str, row: Optional[Dict
         attack_debug = row.get("attack_debug") if isinstance(row.get("attack_debug"), dict) else {}
         method = str(attack_debug.get("method", "")).lower().strip()
         if method == "fragweave":
+            shadow = row.get("attacked_context_shadow")
+            if isinstance(shadow, str) and shadow.strip():
+                # FragWeave GT must track inserted units in woven context; shadow tags are source-of-truth.
+                _clean, spans = shadow_to_clean_and_spans(shadow, "<<FW_INJ>>", "<<FW_END>>")
+                return spans
             return _fragweave_gt_spans(context, row)
 
     instruction = (injected_instruction or "").strip()
