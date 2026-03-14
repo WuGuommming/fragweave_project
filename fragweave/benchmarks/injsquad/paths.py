@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import zipfile
 
 
 INJSQUAD_BENCHMARK_NAME = "injsquad"
@@ -14,6 +15,7 @@ _MANDATORY_BENCHMARK_FILE = "crafted_instruction_data_squad_injection_qa.json"
 _OPTIONAL_CONTEXT_FILE = "crafted_instruction_data_context_squad.json"
 _OPTIONAL_ALPACA_FILE = "crafted_instruction_data_alpaca.json"
 _OPTIONAL_DAVINCI_FILE = "crafted_instruction_data_davinci.json"
+_ARCHIVE_SQUAD_MEMBER = f"{_LOCAL_REFERENCE_PREFIX}/{_MANDATORY_BENCHMARK_FILE}"
 
 
 @dataclass(frozen=True)
@@ -69,3 +71,26 @@ def validate_optional_native_file(path: Path, label: str) -> Path:
     if not path.exists():
         raise FileNotFoundError(f"Missing optional Inj-SQuAD native file ({label}): {path}")
     return path
+
+
+def provision_squad_file_from_local_archive(paths: InjSquadPaths, *, overwrite: bool = False) -> Path:
+    """Copy required Inj-SQuAD benchmark data from the local archive into data/injsquad/raw/."""
+    dst = paths.squad_injection_qa_json
+    if dst.exists() and not overwrite:
+        return dst
+
+    archive_path = paths.local_reference_archive
+    if not archive_path.exists():
+        raise FileNotFoundError(f"Missing local Inj-SQuAD archive: {archive_path}")
+
+    with zipfile.ZipFile(archive_path, "r") as zf:
+        try:
+            payload = zf.read(_ARCHIVE_SQUAD_MEMBER)
+        except KeyError as exc:
+            raise FileNotFoundError(
+                f"Missing expected member in local archive: {_ARCHIVE_SQUAD_MEMBER}"
+            ) from exc
+
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_bytes(payload)
+    return dst
