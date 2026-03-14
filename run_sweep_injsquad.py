@@ -20,7 +20,8 @@ from fragweave.benchmarks.injsquad.paths import (
 from fragweave.config import RunConfig, load_config
 from fragweave.models.hf_chat import HFChat
 from fragweave.prompts.injsquad import compose_direct_context, compose_target_prompt
-from fragweave.utils.io import write_jsonl
+from fragweave.eval.injsquad_migrated import evaluate_injsquad_migrated
+from fragweave.utils.io import write_json, write_jsonl
 
 
 def _parse_args() -> argparse.Namespace:
@@ -35,6 +36,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--do_attack_only", action="store_true")
     parser.add_argument("--provision_from_zip", action="store_true")
     parser.add_argument("--direct_position", type=str, choices=["prepend", "append", "middle"], default="append")
+    parser.add_argument("--skip_migrated_eval", action="store_true")
     return parser.parse_args()
 
 
@@ -176,10 +178,17 @@ def _write_outputs(
     output_paths: Dict[str, Path],
     attacks: List[Dict[str, Any]],
     responses: List[Dict[str, Any]],
+    *,
+    metrics_migrated: Optional[Dict[str, Any]] = None,
+    sample_eval_migrated: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
     output_paths["run_dir"].mkdir(parents=True, exist_ok=True)
     write_jsonl(output_paths["attacks"], attacks)
     write_jsonl(output_paths["responses"], responses)
+    if metrics_migrated is not None:
+        write_json(output_paths["run_dir"] / "metrics_migrated.json", metrics_migrated)
+    if sample_eval_migrated is not None:
+        write_jsonl(output_paths["run_dir"] / "sample_eval_migrated.jsonl", sample_eval_migrated)
 
 
 def _run_target_generation_if_enabled(
@@ -251,8 +260,56 @@ def main() -> None:
         run_cfg,
         do_attack_only=args.do_attack_only,
     )
+
+    metrics_migrated: Optional[Dict[str, Any]] = None
+    sample_eval_migrated: Optional[List[Dict[str, Any]]] = None
+    if args.do_attack_only:
+        metrics_migrated = {
+            "migrated_attack_success_rate": None,
+            "migrated_localization_score": None,
+            "migrated_asr_after_sanitize": None,
+            "migrated_task_success_rate": None,
+            "migrated_task_success_after_sanitize": None,
+            "migrated_utility_retention_rate": None,
+            "status": "skipped_attack_only",
+        }
+        sample_eval_migrated = []
+    elif args.skip_migrated_eval:
+        metrics_migrated = {
+            "migrated_attack_success_rate": None,
+            "migrated_localization_score": None,
+            "migrated_asr_after_sanitize": None,
+            "migrated_task_success_rate": None,
+            "migrated_task_success_after_sanitize": None,
+            "migrated_utility_retention_rate": None,
+            "status": "skipped_by_flag",
+        }
+        sample_eval_migrated = []
+    else:
+        judge_chat = HFChat.from_config(run_cfg.judge_model)
+        detector_cfg = run_cfg.detector_model or run_cfg.judge_model
+        sanitizer_cfg = run_cfg.sanitizer_model or run_cfg.judge_model
+        detector_chat = HFChat.from_config(detector_cfg)
+        sanitizer_chat = HFChat.from_config(sanitizer_cfg)
+        target_chat = HFChat.from_config(run_cfg.target_model)
+        metrics_migrated, sample_eval_migrated = evaluate_injsquad_migrated(
+            attacks=attacks,
+            responses=responses,
+            run_cfg=run_cfg,
+            judge_chat=judge_chat,
+            detector_chat=detector_chat,
+            sanitizer_chat=sanitizer_chat,
+            target_chat=target_chat,
+        )
+
     output_paths = _resolve_output_paths(args, run_cfg)
-    _write_outputs(output_paths, attacks, responses)
+    _write_outputs(
+        output_paths,
+        attacks,
+        responses,
+        metrics_migrated=metrics_migrated,
+        sample_eval_migrated=sample_eval_migrated,
+    )
 
 
 if __name__ == "__main__":
