@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import random
 from dataclasses import asdict
@@ -15,12 +16,14 @@ from fragweave.benchmarks.injsquad import InjSquadSample, load_injsquad_samples,
 from fragweave.benchmarks.injsquad.paths import (
     INJSQUAD_BENCHMARK_NAME,
     get_default_paths,
+    provision_native_squad_reference_files,
     provision_squad_file_from_local_archive,
 )
 from fragweave.config import RunConfig, load_config
 from fragweave.models.hf_chat import HFChat
 from fragweave.prompts.injsquad import compose_direct_context, compose_target_prompt
 from fragweave.eval.injsquad_migrated import evaluate_injsquad_migrated
+from fragweave.eval.injsquad_native import evaluate_injsquad_native
 from fragweave.utils.io import write_json, write_jsonl
 
 
@@ -93,6 +96,7 @@ def _load_samples(args: argparse.Namespace, raw_cfg: Dict[str, Any], run_cfg: Ru
 
     if args.provision_from_zip:
         provision_squad_file_from_local_archive(get_default_paths("."))
+        provision_native_squad_reference_files(get_default_paths("."))
 
     return load_injsquad_samples(repo_root=".", max_samples=max_samples)
 
@@ -174,6 +178,21 @@ def _build_direct_attack(sample: InjSquadSample, position: str) -> Dict[str, Any
     return attack_input
 
 
+def _write_summary_csv(path: Path, metrics_migrated: Optional[Dict[str, Any]], metrics_native: Optional[Dict[str, Any]]) -> None:
+    rows: List[Dict[str, Any]] = []
+    for source, data in (("migrated", metrics_migrated), ("native", metrics_native)):
+        if not data:
+            continue
+        for key, value in data.items():
+            rows.append({"family": source, "metric": key, "value": value})
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["family", "metric", "value"])
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
+
 def _write_outputs(
     output_paths: Dict[str, Path],
     attacks: List[Dict[str, Any]],
@@ -181,6 +200,8 @@ def _write_outputs(
     *,
     metrics_migrated: Optional[Dict[str, Any]] = None,
     sample_eval_migrated: Optional[List[Dict[str, Any]]] = None,
+    metrics_native: Optional[Dict[str, Any]] = None,
+    sample_eval_native: Optional[List[Dict[str, Any]]] = None,
 ) -> None:
     output_paths["run_dir"].mkdir(parents=True, exist_ok=True)
     write_jsonl(output_paths["attacks"], attacks)
@@ -189,6 +210,11 @@ def _write_outputs(
         write_json(output_paths["run_dir"] / "metrics_migrated.json", metrics_migrated)
     if sample_eval_migrated is not None:
         write_jsonl(output_paths["run_dir"] / "sample_eval_migrated.jsonl", sample_eval_migrated)
+    if metrics_native is not None:
+        write_json(output_paths["run_dir"] / "metrics_native.json", metrics_native)
+    if sample_eval_native is not None:
+        write_jsonl(output_paths["run_dir"] / "sample_eval_native.jsonl", sample_eval_native)
+    _write_summary_csv(output_paths["run_dir"] / "summary.csv", metrics_migrated, metrics_native)
 
 
 def _run_target_generation_if_enabled(
@@ -263,6 +289,9 @@ def main() -> None:
 
     metrics_migrated: Optional[Dict[str, Any]] = None
     sample_eval_migrated: Optional[List[Dict[str, Any]]] = None
+    metrics_native: Optional[Dict[str, Any]] = None
+    sample_eval_native: Optional[List[Dict[str, Any]]] = None
+
     if args.do_attack_only:
         metrics_migrated = {
             "migrated_attack_success_rate": None,
@@ -274,33 +303,52 @@ def main() -> None:
             "status": "skipped_attack_only",
         }
         sample_eval_migrated = []
-    elif args.skip_migrated_eval:
-        metrics_migrated = {
-            "migrated_attack_success_rate": None,
-            "migrated_localization_score": None,
-            "migrated_asr_after_sanitize": None,
-            "migrated_task_success_rate": None,
-            "migrated_task_success_after_sanitize": None,
-            "migrated_utility_retention_rate": None,
-            "status": "skipped_by_flag",
+        metrics_native = {
+            "native_probe_attack_success_rate": None,
+            "native_detection_score": None,
+            "native_purification_score": None,
+            "native_defense_success_rate": None,
+            "status": "skipped_attack_only",
         }
-        sample_eval_migrated = []
+        sample_eval_native = []
     else:
-        judge_chat = HFChat.from_config(run_cfg.judge_model)
         detector_cfg = run_cfg.detector_model or run_cfg.judge_model
         sanitizer_cfg = run_cfg.sanitizer_model or run_cfg.judge_model
         detector_chat = HFChat.from_config(detector_cfg)
         sanitizer_chat = HFChat.from_config(sanitizer_cfg)
         target_chat = HFChat.from_config(run_cfg.target_model)
-        metrics_migrated, sample_eval_migrated = evaluate_injsquad_migrated(
+
+        metrics_native, sample_eval_native = evaluate_injsquad_native(
             attacks=attacks,
             responses=responses,
             run_cfg=run_cfg,
-            judge_chat=judge_chat,
             detector_chat=detector_chat,
             sanitizer_chat=sanitizer_chat,
             target_chat=target_chat,
         )
+
+        if args.skip_migrated_eval:
+            metrics_migrated = {
+                "migrated_attack_success_rate": None,
+                "migrated_localization_score": None,
+                "migrated_asr_after_sanitize": None,
+                "migrated_task_success_rate": None,
+                "migrated_task_success_after_sanitize": None,
+                "migrated_utility_retention_rate": None,
+                "status": "skipped_by_flag",
+            }
+            sample_eval_migrated = []
+        else:
+            judge_chat = HFChat.from_config(run_cfg.judge_model)
+            metrics_migrated, sample_eval_migrated = evaluate_injsquad_migrated(
+                attacks=attacks,
+                responses=responses,
+                run_cfg=run_cfg,
+                judge_chat=judge_chat,
+                detector_chat=detector_chat,
+                sanitizer_chat=sanitizer_chat,
+                target_chat=target_chat,
+            )
 
     output_paths = _resolve_output_paths(args, run_cfg)
     _write_outputs(
@@ -309,6 +357,8 @@ def main() -> None:
         responses,
         metrics_migrated=metrics_migrated,
         sample_eval_migrated=sample_eval_migrated,
+        metrics_native=metrics_native,
+        sample_eval_native=sample_eval_native,
     )
 
 

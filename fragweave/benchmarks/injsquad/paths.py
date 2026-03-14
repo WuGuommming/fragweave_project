@@ -94,3 +94,43 @@ def provision_squad_file_from_local_archive(paths: InjSquadPaths, *, overwrite: 
     dst.parent.mkdir(parents=True, exist_ok=True)
     dst.write_bytes(payload)
     return dst
+
+
+def ensure_optional_davinci_file(paths: InjSquadPaths) -> Path:
+    davinci = paths.davinci_json
+    if not davinci.exists():
+        raise FileNotFoundError(
+            "Missing optional native protocol file: data/injsquad/raw/crafted_instruction_data_davinci.json\n"
+            "This file is referenced by the bundled indirect-pia-detection README but is not required for the "
+            "current Inj-SQuAD integration. Place it manually only if a specific optional native sub-protocol requires it."
+        )
+    return davinci
+
+
+def provision_native_squad_reference_files(paths: InjSquadPaths) -> dict[str, Path]:
+    """Provision SQuAD-side reference files from the bundled local archive into data/injsquad/raw/."""
+    archive_path = paths.local_reference_archive
+    if not archive_path.exists():
+        raise FileNotFoundError(f"Missing local Inj-SQuAD archive: {archive_path}")
+
+    members = {
+        "squad_injection_qa": _ARCHIVE_SQUAD_MEMBER,
+        "context_squad": f"{_LOCAL_REFERENCE_PREFIX}/{_OPTIONAL_CONTEXT_FILE}",
+        "alpaca": f"{_LOCAL_REFERENCE_PREFIX}/{_OPTIONAL_ALPACA_FILE}",
+    }
+    out_paths = {
+        "squad_injection_qa": paths.squad_injection_qa_json,
+        "context_squad": paths.context_squad_json,
+        "alpaca": paths.alpaca_json,
+    }
+
+    with zipfile.ZipFile(archive_path, "r") as zf:
+        available = set(zf.namelist())
+        for key, member in members.items():
+            if member not in available:
+                continue
+            out = out_paths[key]
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_bytes(zf.read(member))
+
+    return {k: v for k, v in out_paths.items() if v.exists()}
