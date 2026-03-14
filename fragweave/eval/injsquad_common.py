@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from fragweave.eval.localization import merge_spans
@@ -29,20 +30,76 @@ class MigratedEvalRow:
     metadata: Dict[str, Any]
 
 
-def compute_gt_spans(context: str, injected_instruction: str) -> List[Tuple[int, int]]:
+def _find_all_spans(text: str, needle: str) -> List[Tuple[int, int]]:
+    spans: List[Tuple[int, int]] = []
+    if not needle:
+        return spans
+    start = 0
+    while True:
+        idx = text.find(needle, start)
+        if idx < 0:
+            break
+        spans.append((idx, idx + len(needle)))
+        start = idx + max(1, len(needle))
+    return spans
+
+
+def _fragweave_gt_spans(context: str, row: Dict[str, Any]) -> List[Tuple[int, int]]:
+    attack_debug = row.get("attack_debug") if isinstance(row.get("attack_debug"), dict) else {}
+    weave_debug = attack_debug.get("weave_debug") if isinstance(attack_debug.get("weave_debug"), list) else []
+
+    spans: List[Tuple[int, int]] = []
+    for item in weave_debug:
+        if not isinstance(item, dict):
+            continue
+        mode = str(item.get("mode", "")).lower().strip()
+        if mode == "insert":
+            inserted_sentence = item.get("inserted_sentence")
+            if isinstance(inserted_sentence, str) and inserted_sentence.strip():
+                spans.extend(_find_all_spans(context, inserted_sentence))
+            continue
+
+        if mode == "rewrite":
+            new_sentence = item.get("new_sentence")
+            old_sentence = item.get("old_sentence")
+            if not isinstance(new_sentence, str) or not new_sentence.strip():
+                continue
+
+            new_sentence_spans = _find_all_spans(context, new_sentence)
+            if not new_sentence_spans:
+                continue
+
+            if not isinstance(old_sentence, str) or not old_sentence.strip():
+                spans.extend(new_sentence_spans)
+                continue
+
+            matcher = SequenceMatcher(a=old_sentence, b=new_sentence)
+            changed = [
+                (j1, j2)
+                for tag, _i1, _i2, j1, j2 in matcher.get_opcodes()
+                if tag in {"replace", "insert"} and j2 > j1
+            ]
+            if not changed:
+                continue
+            for span_start, span_end in new_sentence_spans:
+                for j1, j2 in changed:
+                    spans.append((span_start + j1, span_start + j2))
+
+    return merge_spans(spans)
+
+
+def compute_gt_spans(context: str, injected_instruction: str, row: Optional[Dict[str, Any]] = None) -> List[Tuple[int, int]]:
+    if isinstance(row, dict):
+        attack_debug = row.get("attack_debug") if isinstance(row.get("attack_debug"), dict) else {}
+        method = str(attack_debug.get("method", "")).lower().strip()
+        if method == "fragweave":
+            return _fragweave_gt_spans(context, row)
+
     instruction = (injected_instruction or "").strip()
     if not instruction:
         return []
 
-    spans: List[Tuple[int, int]] = []
-    start = 0
-    while True:
-        idx = context.find(instruction, start)
-        if idx < 0:
-            break
-        spans.append((idx, idx + len(instruction)))
-        start = idx + max(1, len(instruction))
-    return merge_spans(spans)
+    return merge_spans(_find_all_spans(context, instruction))
 
 
 def mean_optional(values: Iterable[Optional[float]]) -> Optional[float]:
