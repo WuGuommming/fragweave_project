@@ -99,7 +99,7 @@ def evaluate_injsquad_migrated(
                 max_new_tokens=run_cfg.localization.detector_max_new_tokens,
                 prompt_template=MIGRATED_LOCALIZE_PROMPT,
             )
-            gt_spans = compute_gt_spans(attacked_context, instruction)
+            gt_spans = compute_gt_spans(attacked_context, instruction, row=row)
             loc_p, loc_r, loc_f1 = span_prf1(loc_result.spans, gt_spans)
 
             sanitized_context = sanitize_context(
@@ -152,6 +152,7 @@ def evaluate_injsquad_migrated(
                     "migrated_localize_parse_ok": (loc_result.parse_ok if loc_result is not None else None),
                     "migrated_localize_snippets": (loc_result.snippets if loc_result is not None else []),
                     "migrated_localize_raw_output": (loc_result.raw_model_output if loc_result is not None else ""),
+                    "migrated_gt_spans": gt_spans if response_text is not None else [],
                     "migrated_attack_judge_raw": (attack_decision.raw if attack_decision is not None else ""),
                     "migrated_task_judge_raw": (task_decision.raw if task_decision is not None else ""),
                     "migrated_attack_judge_raw_after_sanitize": (atk_after_san.raw if atk_after_san is not None else ""),
