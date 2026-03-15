@@ -337,6 +337,44 @@ def _variant_metric_summary(
     return row
 
 
+def _ordered_metric_subset(metrics: Optional[Dict[str, Any]], keys: Sequence[str]) -> Dict[str, Any]:
+    if not metrics:
+        return {}
+    return {key: metrics.get(key) for key in keys if key in metrics}
+
+
+def _print_variant_metrics(
+    variant: str,
+    native_metrics: Optional[Dict[str, Any]],
+    migrated_metrics: Optional[Dict[str, Any]],
+) -> None:
+    native_subset = _ordered_metric_subset(
+        native_metrics,
+        [
+            "native_probe_attack_success_rate",
+            "native_detection_score",
+            "native_purification_score",
+            "native_defense_success_rate",
+            "status",
+        ],
+    )
+    migrated_subset = _ordered_metric_subset(
+        migrated_metrics,
+        [
+            "migrated_attack_success_rate",
+            "migrated_localization_score",
+            "migrated_asr_after_sanitize",
+            "migrated_task_success_rate",
+            "migrated_task_success_after_sanitize",
+            "migrated_utility_retention_rate",
+            "status",
+        ],
+    )
+
+    print(f"[Metrics][{variant}][native] {json.dumps(native_subset, ensure_ascii=False)}")
+    print(f"[Metrics][{variant}][migrated] {json.dumps(migrated_subset, ensure_ascii=False)}")
+
+
 def _write_results_csv(path: Path, rows: List[Dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not rows:
@@ -609,6 +647,12 @@ def main() -> None:
         write_json(output_paths["run_dir"] / f"metrics_{variant}_migrated.json", migrated_metrics)
         write_jsonl(output_paths["run_dir"] / f"sample_eval_{variant}_native.jsonl", native_rows_dicts)
         write_jsonl(output_paths["run_dir"] / f"sample_eval_{variant}_migrated.jsonl", migrated_rows_dicts)
+
+        _print_variant_metrics(
+            variant=variant,
+            native_metrics=native_metrics,
+            migrated_metrics=migrated_metrics,
+        )
 
         for family, metrics in (("native", native_metrics), ("migrated", migrated_metrics)):
             for key, value in metrics.items():

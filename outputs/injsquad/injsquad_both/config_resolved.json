@@ -1,7 +1,12 @@
 {
   "benchmark": "injsquad",
   "variants": [
-    "fragweave",
+    "fragweave_k3_refs0",
+    "fragweave_k3_refs1",
+    "fragweave_k4_refs0",
+    "fragweave_k4_refs1",
+    "fragweave_k5_refs0",
+    "fragweave_k5_refs1",
     "direct"
   ],
   "direct_position": "append",
