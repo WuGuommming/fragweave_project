@@ -1,0 +1,11 @@
+family,metric,value
+migrated,migrated_attack_success_rate,0.0
+migrated,migrated_localization_score,1.0
+migrated,migrated_asr_after_sanitize,0.0
+migrated,migrated_task_success_rate,0.0
+migrated,migrated_task_success_after_sanitize,0.0
+migrated,migrated_utility_retention_rate,0.0
+native,native_probe_attack_success_rate,0.0
+native,native_detection_score,0.0
+native,native_purification_score,1.0
+native,native_defense_success_rate,1.0

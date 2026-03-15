@@ -66,10 +66,10 @@ prompt:
 
 output:
   out_dir: outputs
-  run_name: injsquad_fragweave
+  run_name: injsquad_compare
 
 injsquad:
-  attack_method: fragweave
+  attack_method: both
   direct_position: append
   data_path: data/injsquad/raw/crafted_instruction_data_squad_injection_qa.json
 

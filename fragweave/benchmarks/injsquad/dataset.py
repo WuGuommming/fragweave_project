@@ -45,21 +45,27 @@ def _normalize_record(record: Dict[str, Any], idx: int) -> InjSquadSample:
         record,
         ["injected_instruction", "instruction", "attack_instruction", "malicious_instruction"],
     )
-    # Bundled native Inj-SQuAD schema uses `injection_output` as the attack-success probe.
-    probe = _first_text(record, ["injection_output"])
+
+    probe_keys = [
+        "injection_output",      # official Inj-SQuAD field
+        "probe",                 # internal migrated alias
+        "expected_probe",        # explicit expected trigger string
+        "success_signal",        # generic alias for attack-success probe
+    ]
+    probe = _first_text(record, probe_keys)
     if not probe.strip():
         sample_id = _sample_id(record, idx)
         raise ValueError(
             "Inj-SQuAD sample is missing a native probe/success signal field; "
-            f"sample_id={sample_id}. Expected field: injection_output."
+            f"sample_id={sample_id}. Expected one of: {probe_keys}."
         )
-    gold_answer = _first_text(record, ["gold_answer", "answer", "target", "ground_truth"])
 
+    gold_answer = _first_text(record, ["gold_answer", "answer", "target", "ground_truth"])
     metadata = {
         "source_dataset": INJSQUAD_BENCHMARK_NAME,
         "has_injected_instruction": bool(injected_instruction.strip()),
+        "probe_field_candidates": probe_keys,
     }
-
     return InjSquadSample(
         sample_id=_sample_id(record, idx),
         benchmark_name=INJSQUAD_BENCHMARK_NAME,
@@ -81,17 +87,14 @@ def load_injsquad_samples(
     """Load Inj-SQuAD samples deterministically from local benchmark JSON."""
     paths = get_default_paths(repo_root)
     benchmark_file = assert_mandatory_benchmark_exists(paths)
-
     rows = json.loads(benchmark_file.read_text(encoding="utf-8"))
     if not isinstance(rows, list):
         raise ValueError(f"Expected a JSON array in {benchmark_file}")
 
     normalized = [_normalize_record(r, i) for i, r in enumerate(rows) if isinstance(r, dict)]
     normalized.sort(key=lambda s: s.sample_id)
-
     if max_samples is not None:
         if max_samples < 0:
             raise ValueError("max_samples must be >= 0")
         normalized = normalized[:max_samples]
-
     return normalized

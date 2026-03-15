@@ -1,0 +1,9 @@
+{
+  "benchmark_name": "injsquad",
+  "attack_method": "fragweave",
+  "direct_position": null,
+  "num_samples": 200,
+  "config": "configs/injsquad_fragweave.yaml",
+  "do_attack_only": false,
+  "skip_migrated_eval": false
+}
