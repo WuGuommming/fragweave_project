@@ -1,0 +1,21 @@
+{
+  "benchmark": "injsquad",
+  "variants": [
+    "fragweave",
+    "direct"
+  ],
+  "direct_position": "append",
+  "do_attack_only": false,
+  "skip_migrated_eval": false,
+  "provision_from_zip": false,
+  "seed": 2026,
+  "max_samples": 200,
+  "data_path": "data/injsquad/raw/crafted_instruction_data_squad_injection_qa.json",
+  "output_dir": "outputs/injsquad/injsquad_both",
+  "target_model": "Qwen/Qwen2.5-7B-Instruct",
+  "sharder_model": "Qwen/Qwen2.5-7B-Instruct",
+  "weaver_model": "Qwen/Qwen2.5-7B-Instruct",
+  "judge_model": "Qwen/Qwen2.5-7B-Instruct",
+  "detector_model": "Qwen/Qwen2.5-7B-Instruct",
+  "sanitizer_model": "Qwen/Qwen2.5-7B-Instruct"
+}
