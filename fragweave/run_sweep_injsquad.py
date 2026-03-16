@@ -71,6 +71,13 @@ def _resolve_seed(raw_cfg: Dict[str, Any]) -> int:
     return int(_get_injsquad_value(raw_cfg, "seed", 2026))
 
 
+def _resolve_sample_strategy(raw_cfg: Dict[str, Any]) -> str:
+    value = str(_get_injsquad_value(raw_cfg, "sample_strategy", "injection_diverse")).strip().lower()
+    if value not in {"sequential", "sorted", "first_k", "random", "shuffle", "shuffled", "injection_diverse", "stratified_injection", "balanced_injection"}:
+        raise ValueError(f"Unsupported Inj-SQuAD sample_strategy: {value}")
+    return value
+
+
 def _resolve_data_path(raw_cfg: Dict[str, Any]) -> Optional[str]:
     value = _get_injsquad_value(raw_cfg, "data_path", None)
     return None if value is None else str(value)
@@ -99,7 +106,7 @@ def _maybe_get_name_or_path(model_cfg: Any) -> Optional[str]:
     return None if value is None else str(value)
 
 
-def _load_samples(raw_cfg: Dict[str, Any], run_cfg: RunConfig) -> List[InjSquadSample]:
+def _load_samples(raw_cfg: Dict[str, Any], run_cfg: RunConfig, *, seed: int, sample_strategy: str) -> List[InjSquadSample]:
     max_samples = run_cfg.dataset.max_samples
     data_path = _resolve_data_path(raw_cfg)
     provision_from_zip = bool(_get_injsquad_value(raw_cfg, "provision_from_zip", False))
@@ -123,7 +130,7 @@ def _load_samples(raw_cfg: Dict[str, Any], run_cfg: RunConfig) -> List[InjSquadS
         provision_squad_file_from_local_archive(get_default_paths("."))
 
     provision_native_squad_reference_files(get_default_paths("."))
-    return load_injsquad_samples(repo_root=".", max_samples=max_samples)
+    return load_injsquad_samples(repo_root=".", max_samples=max_samples, seed=seed, sample_strategy=sample_strategy)
 
 
 def _choose_ops(context: str, shards: List[str], seed: int) -> List[WeaveOp]:
@@ -466,6 +473,46 @@ def _flatten_result_row(
     return result
 
 
+def _cleanup_stale_variant_outputs(run_dir: Path) -> None:
+    patterns = [
+        "sample_eval_*_native.jsonl",
+        "sample_eval_*_migrated.jsonl",
+        "metrics_*_native.json",
+        "metrics_*_migrated.json",
+        "attacks.jsonl",
+        "responses.jsonl",
+        "results.csv",
+        "debug_fragments.jsonl",
+        "summary.csv",
+        "summary_by_variant.csv",
+        "selected_samples.jsonl",
+    ]
+    for pattern in patterns:
+        for path in run_dir.glob(pattern):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+
+
+def _flush_progress_outputs(
+    *,
+    output_paths: Dict[str, Path],
+    all_attacks: List[Dict[str, Any]],
+    all_responses: List[Dict[str, Any]],
+    debug_rows: List[Dict[str, Any]],
+    all_results_rows: List[Dict[str, Any]],
+    summary_rows: List[Dict[str, Any]],
+    summary_by_variant_rows: List[Dict[str, Any]],
+) -> None:
+    write_jsonl(output_paths["attacks"], all_attacks)
+    write_jsonl(output_paths["responses"], all_responses)
+    write_jsonl(output_paths["debug_fragments"], debug_rows)
+    _write_results_csv(output_paths["results"], all_results_rows)
+    _write_summary_csv(output_paths["summary"], summary_rows)
+    _write_summary_by_variant_csv(output_paths["summary_by_variant"], summary_by_variant_rows)
+
+
 def main() -> None:
     args = _parse_args()
     raw_cfg = _load_raw_config(args.config)
@@ -473,6 +520,7 @@ def main() -> None:
 
     direct_position = _resolve_direct_position(raw_cfg)
     seed = _resolve_seed(raw_cfg)
+    sample_strategy = _resolve_sample_strategy(raw_cfg)
     do_attack_only = bool(_get_injsquad_value(raw_cfg, "do_attack_only", False))
     skip_migrated_eval = bool(_get_injsquad_value(raw_cfg, "skip_migrated_eval", False))
     output_paths = _resolve_output_paths(run_cfg)
@@ -487,6 +535,7 @@ def main() -> None:
         "skip_migrated_eval": skip_migrated_eval,
         "provision_from_zip": bool(_get_injsquad_value(raw_cfg, "provision_from_zip", False)),
         "seed": seed,
+        "sample_strategy": sample_strategy,
         "max_samples": run_cfg.dataset.max_samples,
         "data_path": _resolve_data_path(raw_cfg),
         "output_dir": str(output_paths["run_dir"]),
@@ -499,9 +548,11 @@ def main() -> None:
     }
     print(f"[Config] {json.dumps(resolved_cfg, ensure_ascii=False)}")
     write_json(output_paths["run_dir"] / "config_resolved.json", resolved_cfg)
+    _cleanup_stale_variant_outputs(output_paths["run_dir"])
 
-    samples = _load_samples(raw_cfg, run_cfg)
+    samples = _load_samples(raw_cfg, run_cfg, seed=seed, sample_strategy=sample_strategy)
     print(f"[Data] Loaded {len(samples)} Inj-SQuAD samples")
+    write_jsonl(output_paths["run_dir"] / "selected_samples.jsonl", [to_attack_input(sample) for sample in samples])
 
     print("[Models] Loading target model")
     target_chat = HFChat.from_config(run_cfg.target_model)
@@ -664,14 +715,26 @@ def main() -> None:
                 })
 
         summary_by_variant_rows.append(_variant_metric_summary(variant, native_metrics, migrated_metrics))
+        _flush_progress_outputs(
+            output_paths=output_paths,
+            all_attacks=all_attacks,
+            all_responses=all_responses,
+            debug_rows=debug_rows,
+            all_results_rows=all_results_rows,
+            summary_rows=summary_rows,
+            summary_by_variant_rows=summary_by_variant_rows,
+        )
         print(f"[Variant] Done variant={variant}")
 
-    write_jsonl(output_paths["attacks"], all_attacks)
-    write_jsonl(output_paths["responses"], all_responses)
-    write_jsonl(output_paths["debug_fragments"], debug_rows)
-    _write_results_csv(output_paths["results"], all_results_rows)
-    _write_summary_csv(output_paths["summary"], summary_rows)
-    _write_summary_by_variant_csv(output_paths["summary_by_variant"], summary_by_variant_rows)
+    _flush_progress_outputs(
+        output_paths=output_paths,
+        all_attacks=all_attacks,
+        all_responses=all_responses,
+        debug_rows=debug_rows,
+        all_results_rows=all_results_rows,
+        summary_rows=summary_rows,
+        summary_by_variant_rows=summary_by_variant_rows,
+    )
 
     print(f"[Output] attacks={output_paths['attacks']}")
     print(f"[Output] responses={output_paths['responses']}")

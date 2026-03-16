@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+import random
 
 from .paths import INJSQUAD_BENCHMARK_NAME, assert_mandatory_benchmark_exists, get_default_paths
 from .schema import InjSquadSample
@@ -132,12 +133,69 @@ def _normalize_record(record: Dict[str, Any], idx: int) -> InjSquadSample:
     )
 
 
+def _sample_by_strategy(
+    samples: List[InjSquadSample],
+    *,
+    max_samples: Optional[int],
+    seed: int,
+    sample_strategy: str,
+) -> List[InjSquadSample]:
+    if max_samples is None:
+        return list(samples)
+    if max_samples < 0:
+        raise ValueError("max_samples must be >= 0")
+    if max_samples == 0:
+        return []
+
+    strategy = (sample_strategy or "injection_diverse").strip().lower()
+    rng = random.Random(seed)
+    ordered = list(samples)
+
+    if strategy in {"sequential", "sorted", "first_k"}:
+        return ordered[:max_samples]
+
+    if strategy in {"random", "shuffle", "shuffled"}:
+        rng.shuffle(ordered)
+        return ordered[:max_samples]
+
+    if strategy not in {"injection_diverse", "stratified_injection", "balanced_injection"}:
+        raise ValueError(f"Unsupported Inj-SQuAD sample_strategy: {sample_strategy}")
+
+    groups: Dict[str, List[InjSquadSample]] = {}
+    for sample in ordered:
+        key = sample.injected_instruction.strip() or "__EMPTY_INJECTION__"
+        groups.setdefault(key, []).append(sample)
+
+    group_items = list(groups.items())
+    rng.shuffle(group_items)
+    for _, bucket in group_items:
+        rng.shuffle(bucket)
+
+    selected: List[InjSquadSample] = []
+    bucket_index = 0
+    while len(selected) < max_samples:
+        progressed = False
+        for _, bucket in group_items:
+            if bucket_index < len(bucket):
+                selected.append(bucket[bucket_index])
+                progressed = True
+                if len(selected) >= max_samples:
+                    break
+        if not progressed:
+            break
+        bucket_index += 1
+
+    return selected
+
+
 def load_injsquad_samples(
     *,
     repo_root: str | Path = ".",
     max_samples: Optional[int] = None,
+    seed: int = 2026,
+    sample_strategy: str = "injection_diverse",
 ) -> List[InjSquadSample]:
-    """Load Inj-SQuAD samples deterministically from local benchmark JSON."""
+    """Load Inj-SQuAD samples from local benchmark JSON with reproducible subset selection."""
     paths = get_default_paths(repo_root)
     benchmark_file = assert_mandatory_benchmark_exists(paths)
     rows = json.loads(benchmark_file.read_text(encoding="utf-8"))
@@ -145,8 +203,10 @@ def load_injsquad_samples(
         raise ValueError(f"Expected a JSON array in {benchmark_file}")
     normalized = [_normalize_record(r, i) for i, r in enumerate(rows) if isinstance(r, dict)]
     normalized.sort(key=lambda s: s.sample_id)
-    if max_samples is not None:
-        if max_samples < 0:
-            raise ValueError("max_samples must be >= 0")
-        normalized = normalized[:max_samples]
+    normalized = _sample_by_strategy(
+        normalized,
+        max_samples=max_samples,
+        seed=int(seed),
+        sample_strategy=sample_strategy,
+    )
     return normalized
