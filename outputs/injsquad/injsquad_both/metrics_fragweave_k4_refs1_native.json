@@ -1,6 +1,6 @@
 {
-  "native_probe_attack_success_rate": 0.32,
-  "native_detection_score": 0.0,
+  "native_probe_attack_success_rate": 0.22,
+  "native_detection_score": 0.02,
   "native_purification_score": 1.0,
-  "native_defense_success_rate": 0.14
+  "native_defense_success_rate": 0.26
 }
