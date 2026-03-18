@@ -83,7 +83,9 @@ class QLoraModel(Model):
                 self.ft_model.generate(
                     **input_ids, 
                     max_new_tokens=10, 
-                    repetition_penalty=1.2
+                    repetition_penalty=1.2,
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id,
                 )[0], 
                 skip_special_tokens=True
             ).replace(processed_eval_prompt, '')
@@ -109,7 +111,8 @@ class QLoraModel(Model):
                     repetition_penalty=1.2,
                     do_sample=False,
                     temperature=0,
-                    pad_token_id=self.tokenizer.eos_token_id
+                    pad_token_id=self.tokenizer.eos_token_id,
+                    eos_token_id=self.tokenizer.eos_token_id,
                 )[0], 
                 skip_special_tokens=True
             ).replace(processed_eval_prompt, '')

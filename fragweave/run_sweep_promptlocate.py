@@ -824,7 +824,11 @@ def main() -> None:
     print(f"[Saved] rows={rows_path}")
     print(f"[Saved] summary={summary_path}")
     print(f"[Saved] debug={debug_path}")
-    print(f"[Summary] {_json_dump(summary)}")
+    
+    import json
+    print("[Summary]")
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    print()
 
 
 if __name__ == "__main__":
