@@ -1,0 +1,53 @@
+[Config] {"variant_id": "k5_refs1_guideA", "task": "email_qa", "k": 5, "use_cross_refs": true, "guide_version": "A", "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0}
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:15,  5.15s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:10<00:10,  5.45s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:16<00:05,  5.50s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:20<00:00,  4.90s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:20<00:00,  5.09s/it]
+k5_refs1_guideA:   0%|          | 0/50 [00:00<?, ?it/s]/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+
+Downloading shards:   0%|          | 0/2 [00:00<?, ?it/s][A
+Downloading shards:  50%|█████     | 1/2 [01:26<01:26, 86.22s/it][A
+Downloading shards: 100%|██████████| 2/2 [02:05<00:00, 58.86s/it][ADownloading shards: 100%|██████████| 2/2 [02:05<00:00, 62.96s/it]
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
+Loading checkpoint shards:  50%|█████     | 1/2 [00:10<00:10, 10.80s/it][A
+Loading checkpoint shards: 100%|██████████| 2/2 [00:15<00:00,  7.26s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:15<00:00,  7.80s/it]
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
+Loading checkpoint shards:  50%|█████     | 1/2 [00:11<00:11, 11.05s/it][A
+Loading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  7.69s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:16<00:00,  8.20s/it]
+Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:540: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+`GPT2SdpaAttention` is used but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True` or `head_mask`. Falling back to the manual attention implementation, but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.
+/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+k5_refs1_guideA:   2%|▏         | 1/50 [05:00<4:05:46, 300.96s/it]Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+k5_refs1_guideA:   4%|▍         | 2/50 [06:08<2:11:00, 163.76s/it]Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+k5_refs1_guideA:   6%|▌         | 3/50 [07:17<1:34:28, 120.61s/it]Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+k5_refs1_guideA:   8%|▊         | 4/50 [08:31<1:18:22, 102.23s/it]Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+k5_refs1_guideA:  10%|█         | 5/50 [09:51<1:10:27, 93.93s/it] Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+k5_refs1_guideA:  12%|█▏        | 6/50 [10:52<1:00:44, 82.83s/it]Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+k5_refs1_guideA:  14%|█▍        | 7/50 [11:59<55:39, 77.65s/it]  Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.

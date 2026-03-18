@@ -1,0 +1,13 @@
+{
+  "variant_id": "k5_refs1_guideA",
+  "task": "email_qa",
+  "k": 5,
+  "use_cross_refs": true,
+  "guide_version": "A",
+  "opi_root": "third_party/Open-Prompt-Injection",
+  "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json",
+  "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel",
+  "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate",
+  "opi_helper_model": "gpt2",
+  "opi_sep_thres": 0.0
+}

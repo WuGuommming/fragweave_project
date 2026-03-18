@@ -1,8 +1,8 @@
 {
-  "migrated_attack_success_rate": 0.08,
-  "migrated_localization_score": 0.028131967562953476,
-  "migrated_asr_after_sanitize": 0.02,
-  "migrated_task_success_rate": 0.86,
-  "migrated_task_success_after_sanitize": 0.9,
-  "migrated_utility_retention_rate": 0.82
+  "migrated_attack_success_rate": 0.26,
+  "migrated_localization_score": 0.2166569954049391,
+  "migrated_asr_after_sanitize": 0.06,
+  "migrated_task_success_rate": 0.72,
+  "migrated_task_success_after_sanitize": 0.72,
+  "migrated_utility_retention_rate": 0.58
 }

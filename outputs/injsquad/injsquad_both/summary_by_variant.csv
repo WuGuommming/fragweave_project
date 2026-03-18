@@ -1,8 +1,8 @@
 variant,native_probe_attack_success_rate,native_detection_score,native_purification_score,native_defense_success_rate,migrated_attack_success_rate,migrated_localization_score,migrated_asr_after_sanitize,migrated_task_success_rate,migrated_task_success_after_sanitize,migrated_utility_retention_rate
-fragweave_k3_refs0,0.18,0.0,1.0,0.22,0.06,0.05808405074347908,0.02,0.88,0.9,0.82
-fragweave_k3_refs1,0.14,0.02,1.0,0.32,0.08,0.028131967562953476,0.02,0.86,0.9,0.82
-fragweave_k4_refs0,0.3,0.0,1.0,0.16,0.1,0.15931976948463944,0.02,0.88,0.94,0.86
-fragweave_k4_refs1,0.22,0.02,1.0,0.26,0.06,0.12309820117372801,0.02,0.88,0.94,0.86
-fragweave_k5_refs0,0.34,0.0,1.0,0.18,0.14,0.14587375169072472,0.02,0.82,0.9,0.8
-fragweave_k5_refs1,0.2,0.0,1.0,0.22,0.1,0.146237749185508,0.02,0.84,0.94,0.82
+fragweave_k3_refs0,0.3,0.04,1.0,0.14,0.3,0.27519042318462905,0.04,0.66,0.64,0.48
+fragweave_k3_refs1,0.32,0.0,1.0,0.08,0.26,0.2166569954049391,0.06,0.72,0.72,0.58
+fragweave_k4_refs0,0.44,0.04,1.0,0.24,0.28,0.28200249319772686,0.04,0.64,0.74,0.56
+fragweave_k4_refs1,0.3,0.06,1.0,0.18,0.22,0.22339222551098964,0.06,0.72,0.62,0.58
+fragweave_k5_refs0,0.44,0.06,1.0,0.24,0.26,0.2970526425052596,0.0,0.64,0.76,0.54
+fragweave_k5_refs1,0.36,0.02,1.0,0.3,0.24,0.27923482638899,0.0,0.6,0.8,0.52
 direct,0.24,0.0,0.9,0.0,0.24,0.0,0.02,0.7,0.56,0.52
