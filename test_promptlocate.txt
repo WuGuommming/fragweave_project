@@ -1,24 +1,103 @@
 [Config] {"variant_id": "k5_refs1_guideA", "task": "email_qa", "k": 5, "use_cross_refs": true, "guide_version": "A", "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0}
 Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:15,  5.26s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:10<00:10,  5.39s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:16<00:05,  5.34s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:19<00:00,  4.80s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:19<00:00,  5.00s/it]
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:17,  5.71s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:11<00:12,  6.05s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:17<00:05,  5.97s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:22<00:00,  5.31s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:22<00:00,  5.54s/it]
 k5_refs1_guideA:   0%|          | 0/50 [00:00<?, ?it/s]/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
   warnings.warn(
 
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
-Loading checkpoint shards:  50%|█████     | 1/2 [00:10<00:10, 10.01s/it][A
-Loading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  6.87s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  7.34s/it]
+Loading checkpoint shards:  50%|█████     | 1/2 [00:09<00:09,  9.58s/it][A
+Loading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  6.61s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  7.06s/it]
 
 Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
-Loading checkpoint shards:  50%|█████     | 1/2 [00:10<00:10, 10.55s/it][A
-Loading checkpoint shards: 100%|██████████| 2/2 [00:15<00:00,  7.47s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:15<00:00,  7.93s/it]
+Loading checkpoint shards:  50%|█████     | 1/2 [00:10<00:10, 10.12s/it][A
+Loading checkpoint shards: 100%|██████████| 2/2 [00:15<00:00,  7.14s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:15<00:00,  7.59s/it]
 Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
 /home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:540: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
   warnings.warn(
 `GPT2SdpaAttention` is used but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True` or `head_mask`. Falling back to the manual attention implementation, but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.
 /home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
   warnings.warn(
-k5_refs1_guideA:   2%|▏         | 1/50 [02:44<2:14:42, 164.95s/it]k5_refs1_guideA:   4%|▍         | 2/50 [03:50<1:25:10, 106.47s/it]k5_refs1_guideA:   6%|▌         | 3/50 [04:57<1:09:19, 88.51s/it] k5_refs1_guideA:   8%|▊         | 4/50 [06:08<1:02:36, 81.66s/it]k5_refs1_guideA:  10%|█         | 5/50 [07:25<59:55, 79.90s/it]  k5_refs1_guideA:  12%|█▏        | 6/50 [08:24<53:26, 72.87s/it]k5_refs1_guideA:  14%|█▍        | 7/50 [09:29<50:13, 70.07s/it]k5_refs1_guideA:  16%|█▌        | 8/50 [10:36<48:31, 69.33s/it]k5_refs1_guideA:  18%|█▊        | 9/50 [11:40<46:03, 67.41s/it]k5_refs1_guideA:  20%|██        | 10/50 [12:57<47:06, 70.66s/it]k5_refs1_guideA:  22%|██▏       | 11/50 [14:12<46:44, 71.92s/it]k5_refs1_guideA:  24%|██▍       | 12/50 [15:34<47:30, 75.02s/it]k5_refs1_guideA:  26%|██▌       | 13/50 [16:34<43:20, 70.29s/it]k5_refs1_guideA:  28%|██▊       | 14/50 [17:23<38:26, 64.08s/it]k5_refs1_guideA:  30%|███       | 15/50 [19:36<49:23, 84.68s/it]k5_refs1_guideA:  32%|███▏      | 16/50 [20:40<44:29, 78.51s/it]k5_refs1_guideA:  34%|███▍      | 17/50 [22:02<43:44, 79.53s/it]k5_refs1_guideA:  36%|███▌      | 18/50 [23:30<43:41, 81.93s/it]k5_refs1_guideA:  38%|███▊      | 19/50 [24:49<41:56, 81.17s/it]k5_refs1_guideA:  40%|████      | 20/50 [25:48<37:13, 74.46s/it]k5_refs1_guideA:  42%|████▏     | 21/50 [26:58<35:25, 73.28s/it]k5_refs1_guideA:  44%|████▍     | 22/50 [28:25<36:09, 77.47s/it]k5_refs1_guideA:  46%|████▌     | 23/50 [29:29<32:57, 73.23s/it]k5_refs1_guideA:  48%|████▊     | 24/50 [30:58<33:45, 77.89s/it]k5_refs1_guideA:  50%|█████     | 25/50 [32:27<33:50, 81.24s/it]k5_refs1_guideA:  52%|█████▏    | 26/50 [33:47<32:22, 80.93s/it]k5_refs1_guideA:  54%|█████▍    | 27/50 [34:42<28:03, 73.20s/it]k5_refs1_guideA:  56%|█████▌    | 28/50 [35:34<24:30, 66.82s/it]k5_refs1_guideA:  58%|█████▊    | 29/50 [36:34<22:39, 64.72s/it]k5_refs1_guideA:  60%|██████    | 30/50 [37:32<20:53, 62.65s/it]k5_refs1_guideA:  62%|██████▏   | 31/50 [39:02<22:29, 71.00s/it]k5_refs1_guideA:  64%|██████▍   | 32/50 [40:34<23:12, 77.33s/it]k5_refs1_guideA:  66%|██████▌   | 33/50 [41:30<20:04, 70.87s/it]k5_refs1_guideA:  68%|██████▊   | 34/50 [42:48<19:27, 72.98s/it]k5_refs1_guideA:  70%|███████   | 35/50 [43:41<16:45, 67.00s/it]k5_refs1_guideA:  72%|███████▏  | 36/50 [44:51<15:51, 67.95s/it]k5_refs1_guideA:  74%|███████▍  | 37/50 [46:08<15:16, 70.49s/it]k5_refs1_guideA:  76%|███████▌  | 38/50 [47:43<15:36, 78.04s/it]k5_refs1_guideA:  78%|███████▊  | 39/50 [48:43<13:19, 72.67s/it]k5_refs1_guideA:  80%|████████  | 40/50 [49:33<10:58, 65.90s/it]k5_refs1_guideA:  82%|████████▏ | 41/50 [50:30<09:27, 63.06s/it]k5_refs1_guideA:  84%|████████▍ | 42/50 [51:36<08:31, 63.97s/it]k5_refs1_guideA:  86%|████████▌ | 43/50 [52:41<07:29, 64.22s/it]k5_refs1_guideA:  88%|████████▊ | 44/50 [53:48<06:29, 64.98s/it]k5_refs1_guideA:  90%|█████████ | 45/50 [54:43<05:10, 62.17s/it]k5_refs1_guideA:  92%|█████████▏| 46/50 [55:43<04:06, 61.55s/it]k5_refs1_guideA:  94%|█████████▍| 47/50 [56:47<03:06, 62.14s/it]k5_refs1_guideA:  96%|█████████▌| 48/50 [57:58<02:09, 64.86s/it]k5_refs1_guideA:  98%|█████████▊| 49/50 [58:55<01:02, 62.42s/it]k5_refs1_guideA: 100%|██████████| 50/50 [1:00:02<00:00, 63.75s/it]k5_refs1_guideA: 100%|██████████| 50/50 [1:00:02<00:00, 72.04s/it]
-[Saved] rows=outputs/emailqa_fragweave_loc_san_promptlocate/results_k5_refs1_guideA.csv
-[Saved] summary=outputs/emailqa_fragweave_loc_san_promptlocate/summary_k5_refs1_guideA.csv
-[Saved] debug=outputs/emailqa_fragweave_loc_san_promptlocate/debug_k5_refs1_guideA.jsonl
-[Summary] {"variant_id": "k5_refs1_guideA", "n": 50, "asr": 0.14, "asr_direct": 0.26, "loc_f1": 0.48138740576566513, "loc_f1_direct": 0.8667958372260322, "asr_after_sanitizer_generic": 0.04, "asr_after_sanitizer_generic_direct": 0.0, "asr_after_sanitizer_task": 0.0, "asr_after_sanitizer_task_direct": 0.02, "asr_after_redaction": 0.1, "asr_after_redaction_direct": 0.0, "promptlocate_loc_f1": 0.7086642777869523, "promptlocate_loc_f1_direct": 0.8042271899687478, "asr_after_promptlocate": 0.04, "asr_after_promptlocate_direct": 0.0, "datasentinel_recall": 0.98, "datasentinel_recall_direct": 1.0, "asr_after_detector_promptlocate": 0.04, "asr_after_detector_promptlocate_direct": 0.0}
+k5_refs1_guideA:   2%|▏         | 1/50 [02:47<2:17:04, 167.84s/it]k5_refs1_guideA:   4%|▍         | 2/50 [03:54<1:26:46, 108.46s/it]k5_refs1_guideA:   4%|▍         | 2/50 [04:47<1:54:54, 143.63s/it]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep_promptlocate.py", line 834, in <module>
+    main()
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep_promptlocate.py", line 663, in main
+    generic_clean, generic_dbg = _sanitize_with_checks(
+                                 ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 768, in _sanitize_with_checks
+    raw1 = _call_sanitize_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 642, in _call_sanitize_context
+    return sanitize_fn(sanitizer_chat, context, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/defenses/sanitizer.py", line 33, in sanitize_context
+    raw = chat.generate(prompt)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/models/hf_chat.py", line 72, in generate
+    out = self.model.generate(
+          ^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 1914, in generate
+    result = self._sample(
+             ^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 2651, in _sample
+    outputs = self(
+              ^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 169, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 1221, in forward
+    outputs = self.model(
+              ^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 1023, in forward
+    layer_outputs = decoder_layer(
+                    ^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 169, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 763, in forward
+    hidden_states, self_attn_weights, present_key_value = self.self_attn(
+                                                          ^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1518, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 164, in new_forward
+    args, kwargs = module._hf_hook.pre_forward(module, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 363, in pre_forward
+    return send_to_device(args, self.execution_device), send_to_device(
+                                                        ^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/utils/operations.py", line 183, in send_to_device
+    {
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/utils/operations.py", line 184, in <dictcomp>
+    k: t if k in skip_keys else send_to_device(t, device, non_blocking=non_blocking, skip_keys=skip_keys)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/utils/operations.py", line 148, in send_to_device
+    if is_torch_tensor(tensor) or hasattr(tensor, "to"):
+                                  ^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

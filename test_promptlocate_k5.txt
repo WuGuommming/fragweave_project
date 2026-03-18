@@ -1,0 +1,30 @@
+[Config] {"variant_id": "k5_refs1_guideA", "task": "email_qa", "k": 5, "use_cross_refs": true, "guide_version": "A", "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0}
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/4 [00:03<?, ?it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep_promptlocate.py", line 850, in <module>
+    main()
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep_promptlocate.py", line 567, in main
+    target = HFChat.from_config(cfg.target_model)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/models/hf_chat.py", line 46, in from_config
+    model = AutoModelForCausalLM.from_pretrained(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/auto/auto_factory.py", line 564, in from_pretrained
+    return model_class.from_pretrained(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/modeling_utils.py", line 3838, in from_pretrained
+    ) = cls._load_pretrained_model(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/modeling_utils.py", line 4298, in _load_pretrained_model
+    new_error_msgs, offload_index, state_dict_index = _load_state_dict_into_meta_model(
+                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/modeling_utils.py", line 895, in _load_state_dict_into_meta_model
+    set_module_tensor_to_device(model, param_name, param_device, **set_module_kwargs)
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/utils/modeling.py", line 460, in set_module_tensor_to_device
+    clear_device_cache()
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/utils/memory.py", line 30, in clear_device_cache
+    gc.collect()
+KeyboardInterrupt

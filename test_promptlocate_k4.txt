@@ -1,0 +1,20 @@
+[Config] {"variant_id": "k4_refs1_guideA", "task": "email_qa", "k": 4, "use_cross_refs": true, "guide_version": "A", "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0}
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:06<00:20,  6.94s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:14<00:14,  7.08s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:21<00:07,  7.34s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:27<00:00,  6.62s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:27<00:00,  6.82s/it]
+k4_refs1_guideA:   0%|          | 0/50 [00:00<?, ?it/s]/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
+Loading checkpoint shards:  50%|█████     | 1/2 [00:12<00:12, 12.30s/it][A
+Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  8.46s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  9.04s/it]
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
+Loading checkpoint shards:  50%|█████     | 1/2 [00:13<00:13, 13.05s/it][A
+Loading checkpoint shards: 100%|██████████| 2/2 [00:19<00:00,  9.09s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:19<00:00,  9.68s/it]
+Asking to truncate to max_length but no maximum length is provided and the model has no predefined maximum length. Default to no truncation.
+/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:540: UserWarning: `do_sample` is set to `False`. However, `temperature` is set to `0` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `temperature`.
+  warnings.warn(
+`GPT2SdpaAttention` is used but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True` or `head_mask`. Falling back to the manual attention implementation, but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.
+/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+k4_refs1_guideA:   2%|▏         | 1/50 [04:25<3:36:45, 265.42s/it]k4_refs1_guideA:   4%|▍         | 2/50 [06:47<2:34:07, 192.66s/it]k4_refs1_guideA:   6%|▌         | 3/50 [09:16<2:15:28, 172.95s/it]
