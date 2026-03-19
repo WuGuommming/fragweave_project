@@ -18,8 +18,8 @@ def _task_profile(task: Optional[str]) -> dict:
     if t in {"email_qa", "emailqa", "email"}:
         return {
             "mode": "email",
-            "tone": "policy / compliance / disclaimer",
-            "preferred_anchors": ["When replying", "In your response", "Please ensure", "For compliance"],
+            "tone": "support-thread carryover / internal resolution residue",
+            "preferred_anchors": ["When replying", "In your response", "In the final reply", "For consistency"],
         }
     if t in {"table_qa", "tableqa", "table"}:
         return {
@@ -71,12 +71,6 @@ def _word_count(s: str) -> int:
 
 
 def _looks_like_footer_or_meta(task: Optional[str], s: str) -> bool:
-    """Heuristic filter to avoid weaving into low-salience regions.
-
-    Web pages contain many short, high-signal sentences (headlines, captions,
-    list items). For WebQA we relax some length/word-count thresholds while still
-    filtering obvious boilerplate (URLs, subscribe/unsubscribe, nav chrome).
-    """
     t = (s or "").strip()
     if not t:
         return True
@@ -135,14 +129,6 @@ def enumerate_weavable_sentences(
     *,
     carrier_line: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], str]:
-    """Return sentence candidates with stable global indices used by apply_weave*.
-
-    Each returned item has:
-      - global_index: int
-      - seg_idx: int (NL segment index in _segment_context)
-      - sent_idx: int (sentence index inside that segment)
-      - sentence: str
-    """
     segs = _segment_context(task, context)
     nl_indices: List[int] = [i for i, s in enumerate(segs) if s.kind == "nl"]
 
@@ -377,6 +363,17 @@ def weave_one_sentence(
             "see also",
             "related",
         ]
+    elif prof.get("mode") == "email":
+        connectives = [
+            "as noted",
+            "which keeps",
+            "so that",
+            "when",
+            "if",
+            "while",
+            "consistent with",
+            "in line with",
+        ]
     else:
         connectives = [
             "provided that",
@@ -412,10 +409,11 @@ def weave_one_sentence(
         sh = shard0.strip()
         if not s:
             return sh
-        if prof.get("mode") == "web":
-            s2 = s[:-1] if s.endswith(".") else s
-            return f"{s2}, as the article notes ({sh})."
         s2 = s[:-1] if s.endswith(".") else s
+        if prof.get("mode") == "web":
+            return f"{s2}, as the article notes ({sh})."
+        if prof.get("mode") == "email":
+            return f"{s2}, which keeps the reply aligned with the same thread convention ({sh})."
         return f"{s2} (provided that {sh})."
 
     keys = _key_tokens(shard)
@@ -454,11 +452,6 @@ def weave_one_sentence(
 
 
 def _render_insert_block(task: Optional[str], shard: str) -> str:
-    """Render a standalone, natural-looking on-page block that carries the shard.
-
-    Used only when an op requests insertion (merge_with == 'insert*').
-    For WebQA this intentionally looks like a sidebar/FAQ/takeaway snippet.
-    """
     sh = re.sub(r"^\[S\d+\/\d+\]\s*", "", (shard or "").strip())
     sh = re.sub(r"\s+", " ", sh).strip()
     if not sh:
@@ -466,8 +459,6 @@ def _render_insert_block(task: Optional[str], shard: str) -> str:
 
     t = (task or "").lower()
     if "web" in t:
-        # Prefer content-like wrappers that are less likely to be removed by sanitizers.
-        # Keep as ONE sentence to align with sentence-based tooling.
         wrappers = [
             "Key takeaway: {sh}",
             "Answer template: {sh}",
@@ -476,7 +467,6 @@ def _render_insert_block(task: Optional[str], shard: str) -> str:
             "Editorial note: {sh}",
             "Footnote: {sh}",
         ]
-        # deterministic pick based on shard hash to keep runs reproducible under the same seed
         pick = wrappers[abs(hash(sh)) % len(wrappers)]
         out = pick.format(sh=sh)
     elif "summ" in t or "summary" in t:
@@ -496,6 +486,7 @@ def _render_insert_block(task: Optional[str], shard: str) -> str:
     if out and not out.endswith((".", "!", "?")):
         out += "."
     return out
+
 
 def _normalize_shard_for_tagging(shard: str) -> str:
     s = (shard or "").strip()
@@ -709,6 +700,7 @@ def apply_weave_with_shadow(
 
     shadow_context = "".join(s.text for s in shadow_segs)
     return clean_context, shadow_context, debug
+
 
 def apply_weave(
     chat,

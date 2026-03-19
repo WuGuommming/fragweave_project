@@ -1,0 +1,8 @@
+[Config] {"weave_strategy": "auto", "baseline_injection_mode": "append_standalone", "custom_detector_prompt": false}
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:16,  5.62s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:11<00:11,  5.84s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:17<00:05,  5.75s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:21<00:00,  5.32s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:21<00:00,  5.48s/it]
+
+== Variant k3_refs0_guideA ==
+k3_refs0_guideA:   0%|          | 0/200 [00:00<?, ?it/s]/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+k3_refs0_guideA:   0%|          | 1/200 [01:03<3:31:53, 63.89s/it]k3_refs0_guideA:   1%|          | 2/200 [02:00<3:15:49, 59.34s/it]k3_refs0_guideA:   2%|▏         | 3/200 [02:29<2:29:59, 45.69s/it]k3_refs0_guideA:   2%|▏         | 4/200 [03:36<2:56:36, 54.06s/it]

@@ -11,14 +11,10 @@ def _task_name(task: Optional[str]) -> str:
 
 
 def summarize_intent(instruction: str, *, max_words: int = 10) -> str:
-    """Make a short, task-agnostic intent phrase from a full instruction.
-
-    We keep it short and mildly obfuscated to reduce brittleness.
-    """
+    """Make a short, task-agnostic intent phrase from a full instruction."""
     s = re.sub(r"\s+", " ", (instruction or "").strip())
     if not s:
         return "follow the specified output requirement"
-    # strip leading imperatives like "Ignore..."
     s = re.sub(r"^(please\s+)?(ignore|always|never|only)\b", "", s, flags=re.I).strip()
     words = s.split(" ")[:max_words]
     return " ".join(words).strip(" .,!?") or "follow the specified output requirement"
@@ -33,7 +29,6 @@ class GuidanceResult:
 
 def generate_guidance(task: Optional[str], version: str, instruction: str, rng: random.Random, *, lib_override: Optional[Dict[str, Any]] = None) -> GuidanceResult:
     t = _task_name(task)
-    # Optional per-task libraries (e.g., from YAML). If not provided, fall back to built-ins.
     if "email" in t:
         key = "email"
     elif "table" in t:
@@ -69,13 +64,11 @@ def generate_guidance(task: Optional[str], version: str, instruction: str, rng: 
         pool = guide_a.get(key, guide_a.get("default", []))
         if not pool:
             raise ValueError(f"guidance guide_a_templates missing for task key '{key}' (or 'default') in YAML.")
-        # pick 2 short guidance snippets
         snips = rng.sample(pool, k=min(2, len(pool)))
-        # lightly bind to intent without making it too explicit
-        snips = [s.replace("required output", "required output").replace("pattern", f"pattern ({intent})") for s in snips]
+        if "email" in key:
+            snips = [s.replace("{intent}", intent) for s in snips]
         return GuidanceResult(version="A", snippets=snips, meta={"intent": intent, "task_key": key})
 
-    # Version B: consistency priming via a repeated anchor token
     anchors = guide_b_anchors.get(key, guide_b_anchors.get("default", []))
     if not anchors:
         raise ValueError(f"guidance guide_b_anchors missing for task key '{key}' (or 'default') in YAML.")
@@ -85,6 +78,5 @@ def generate_guidance(task: Optional[str], version: str, instruction: str, rng: 
         raise ValueError(f"guidance guide_b_templates missing for task key '{key}' (or 'default') in YAML.")
     snips = rng.sample(pool, k=min(2, len(pool)))
     snips = [s.format(anchor=anchor) for s in snips]
-    # Add one more short reminder to ensure the anchor appears 3 times total
     snips.append(f"Reminder: keep the reply consistent with {anchor}.")
     return GuidanceResult(version="B", snippets=snips, meta={"intent": intent, "anchor": anchor, "task_key": key})
