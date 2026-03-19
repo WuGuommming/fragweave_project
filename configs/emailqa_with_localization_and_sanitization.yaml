@@ -2,7 +2,7 @@ dataset:
   task: email_qa
   bipia_root: data/bipia
   split: test
-  max_samples: null
+  max_samples: 200
 
 # If BIPIA's EmailQA jsonl schema differs, set these keys after you download assets.
 # context_key: context

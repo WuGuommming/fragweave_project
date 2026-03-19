@@ -1,7 +1,0 @@
-variant_id,n,asr,asr_direct,loc_f1,loc_f1_direct,asr_after_sanitizer_generic,asr_after_sanitizer_generic_direct,asr_after_sanitizer_task,asr_after_sanitizer_task_direct,asr_after_redaction,asr_after_redaction_direct
-k3_refs0_guideA,50,0.22,0.14,0.4737446380430145,0.8820969712898336,0.12,0.0,0.02,0.02,0.08,0.0
-k3_refs1_guideA,50,0.32,0.28,0.508239496864241,0.8751526697610322,0.2,0.06,0.06,0.04,0.2,0.0
-k4_refs0_guideA,50,0.18,0.2,0.48900398361301084,0.8840793545719774,0.1,0.0,0.04,0.0,0.04,0.0
-k4_refs1_guideA,50,0.24,0.16,0.4251930278375889,0.8849037871172106,0.1,0.0,0.04,0.0,0.08,0.0
-k5_refs0_guideA,50,0.2,0.16,0.5493093305609199,0.8792936566174525,0.1,0.02,0.04,0.02,0.04,0.0
-k5_refs1_guideA,50,0.3,0.26,0.5492925521192509,0.879705611788576,0.14,0.06,0.0,0.0,0.12,0.0

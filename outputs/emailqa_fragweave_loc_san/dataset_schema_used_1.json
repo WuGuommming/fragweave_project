@@ -1,7 +1,0 @@
-{
-  "jsonl_path": "/home/gwu3/code/fragweave_project/data/bipia/benchmark/email/test.jsonl",
-  "context_key": "context",
-  "question_key": "question",
-  "answer_key": "ideal",
-  "id_key": ""
-}

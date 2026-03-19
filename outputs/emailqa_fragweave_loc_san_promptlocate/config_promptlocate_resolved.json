@@ -1,7 +1,7 @@
 {
-  "variant_id": "k5_refs1_guideA",
+  "variant_id": "k3_refs1_guideA",
   "task": "email_qa",
-  "k": 5,
+  "k": 3,
   "use_cross_refs": true,
   "guide_version": "A",
   "opi_root": "third_party/Open-Prompt-Injection",

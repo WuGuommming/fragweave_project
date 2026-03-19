@@ -1066,7 +1066,7 @@ def main() -> None:
                     variant_results: List[Dict[str, Any]] = []
                     variant_debugs: List[Dict[str, Any]] = []
                     eval_plan = build_sample_instruction_plan(
-                        max_samples=len(samples),
+                        num_samples=len(samples),
                         num_instructions=len(instructions),
                         requested_max_samples=requested_max_samples,
                         rng=rng,
