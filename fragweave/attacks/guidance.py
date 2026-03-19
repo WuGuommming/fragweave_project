@@ -11,7 +11,6 @@ def _task_name(task: Optional[str]) -> str:
 
 
 def summarize_intent(instruction: str, *, max_words: int = 10) -> str:
-    """Make a short, task-agnostic intent phrase from a full instruction."""
     s = re.sub(r"\s+", " ", (instruction or "").strip())
     if not s:
         return "follow the specified output requirement"
@@ -65,8 +64,10 @@ def generate_guidance(task: Optional[str], version: str, instruction: str, rng: 
         if not pool:
             raise ValueError(f"guidance guide_a_templates missing for task key '{key}' (or 'default') in YAML.")
         snips = rng.sample(pool, k=min(2, len(pool)))
-        if "email" in key:
+        if key == "email":
             snips = [s.replace("{intent}", intent) for s in snips]
+        else:
+            snips = [s.replace("pattern", f"pattern ({intent})") for s in snips]
         return GuidanceResult(version="A", snippets=snips, meta={"intent": intent, "task_key": key})
 
     anchors = guide_b_anchors.get(key, guide_b_anchors.get("default", []))
@@ -77,6 +78,9 @@ def generate_guidance(task: Optional[str], version: str, instruction: str, rng: 
     if not pool:
         raise ValueError(f"guidance guide_b_templates missing for task key '{key}' (or 'default') in YAML.")
     snips = rng.sample(pool, k=min(2, len(pool)))
-    snips = [s.format(anchor=anchor) for s in snips]
-    snips.append(f"Reminder: keep the reply consistent with {anchor}.")
+    snips = [s.format(anchor=anchor, intent=intent) for s in snips]
+    if key == "email":
+        snips.append(f"Queue memory: similar replies often stay aligned with {anchor} when resolving mixed thread cues.")
+    else:
+        snips.append(f"Reminder: keep the reply consistent with {anchor}.")
     return GuidanceResult(version="B", snippets=snips, meta={"intent": intent, "anchor": anchor, "task_key": key})

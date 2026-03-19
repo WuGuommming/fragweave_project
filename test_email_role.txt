@@ -1,0 +1,20 @@
+[Config] {"weave_strategy": "auto", "baseline_injection_mode": "append_standalone", "custom_detector_prompt": false, "email_role_plan_enabled": true, "email_role_aware_ops": true, "role_debug_enabled": true}
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:16,  5.57s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:11<00:11,  5.58s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:16<00:05,  5.52s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:20<00:00,  4.91s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:20<00:00,  5.14s/it]
+
+== Variant k3_refs0_guideA ==
+k3_refs0_guideA:   0%|          | 0/200 [00:00<?, ?it/s]/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+k3_refs0_guideA:   0%|          | 0/200 [00:19<?, ?it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 706, in <module>
+    main()
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 599, in main
+    shard_ops, ctx2 = choose_role_aware_ops(task, context, shard_infos, rng, carrier_line=carrier)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 265, in choose_role_aware_ops
+    ops.append(WeaveOp(shard=text, sent_index=int(meta[idx]["global_index"]), merge_with=merge))
+                                                  ~~~~^^^^^
+IndexError: list index out of range
