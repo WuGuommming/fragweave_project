@@ -18,4 +18,33 @@ ASR after redaction (our method): 0.010
 ASR after redaction (direct baseline): 0.000
 
 == Variant k3_refs1_guideA ==
-k3_refs1_guideA:   0%|          | 0/200 [00:00<?, ?it/s]k3_refs1_guideA:   0%|          | 1/200 [00:57<3:09:50, 57.24s/it]k3_refs1_guideA:   1%|          | 2/200 [02:04<3:27:59, 63.03s/it]k3_refs1_guideA:   2%|▏         | 3/200 [03:04<3:23:07, 61.87s/it]k3_refs1_guideA:   2%|▏         | 4/200 [03:44<2:54:03, 53.28s/it]k3_refs1_guideA:   2%|▎         | 5/200 [05:03<3:23:16, 62.55s/it]k3_refs1_guideA:   3%|▎         | 6/200 [06:25<3:43:04, 68.99s/it]k3_refs1_guideA:   4%|▎         | 7/200 [07:20<3:27:05, 64.38s/it]k3_refs1_guideA:   4%|▍         | 8/200 [08:21<3:22:27, 63.27s/it]k3_refs1_guideA:   4%|▍         | 9/200 [09:12<3:09:27, 59.51s/it]k3_refs1_guideA:   5%|▌         | 10/200 [10:05<3:02:12, 57.54s/it]k3_refs1_guideA:   6%|▌         | 11/200 [11:00<2:58:48, 56.77s/it]k3_refs1_guideA:   6%|▌         | 12/200 [11:45<2:46:25, 53.11s/it]k3_refs1_guideA:   6%|▋         | 13/200 [12:31<2:39:22, 51.13s/it]k3_refs1_guideA:   7%|▋         | 14/200 [13:30<2:45:26, 53.37s/it]k3_refs1_guideA:   8%|▊         | 15/200 [14:25<2:45:43, 53.75s/it]k3_refs1_guideA:   8%|▊         | 16/200 [15:15<2:42:04, 52.85s/it]k3_refs1_guideA:   8%|▊         | 17/200 [16:01<2:34:20, 50.60s/it]k3_refs1_guideA:   9%|▉         | 18/200 [16:59<2:40:41, 52.98s/it]k3_refs1_guideA:  10%|▉         | 19/200 [17:55<2:41:58, 53.69s/it]k3_refs1_guideA:  10%|█         | 20/200 [19:13<3:03:31, 61.17s/it]k3_refs1_guideA:  10%|█         | 21/200 [20:27<3:13:42, 64.93s/it]k3_refs1_guideA:  11%|█         | 22/200 [21:27<3:08:24, 63.51s/it]
+k3_refs1_guideA:   0%|          | 0/200 [00:00<?, ?it/s]k3_refs1_guideA:   0%|          | 1/200 [00:57<3:09:50, 57.24s/it]k3_refs1_guideA:   1%|          | 2/200 [02:04<3:27:59, 63.03s/it]k3_refs1_guideA:   2%|▏         | 3/200 [03:04<3:23:07, 61.87s/it]k3_refs1_guideA:   2%|▏         | 4/200 [03:44<2:54:03, 53.28s/it]k3_refs1_guideA:   2%|▎         | 5/200 [05:03<3:23:16, 62.55s/it]k3_refs1_guideA:   3%|▎         | 6/200 [06:25<3:43:04, 68.99s/it]k3_refs1_guideA:   4%|▎         | 7/200 [07:20<3:27:05, 64.38s/it]k3_refs1_guideA:   4%|▍         | 8/200 [08:21<3:22:27, 63.27s/it]k3_refs1_guideA:   4%|▍         | 9/200 [09:12<3:09:27, 59.51s/it]k3_refs1_guideA:   5%|▌         | 10/200 [10:05<3:02:12, 57.54s/it]k3_refs1_guideA:   6%|▌         | 11/200 [11:00<2:58:48, 56.77s/it]k3_refs1_guideA:   6%|▌         | 12/200 [11:45<2:46:25, 53.11s/it]k3_refs1_guideA:   6%|▋         | 13/200 [12:31<2:39:22, 51.13s/it]k3_refs1_guideA:   7%|▋         | 14/200 [13:30<2:45:26, 53.37s/it]k3_refs1_guideA:   8%|▊         | 15/200 [14:25<2:45:43, 53.75s/it]k3_refs1_guideA:   8%|▊         | 16/200 [15:15<2:42:04, 52.85s/it]k3_refs1_guideA:   8%|▊         | 17/200 [16:01<2:34:20, 50.60s/it]k3_refs1_guideA:   9%|▉         | 18/200 [16:59<2:40:41, 52.98s/it]k3_refs1_guideA:  10%|▉         | 19/200 [17:55<2:41:58, 53.69s/it]k3_refs1_guideA:  10%|█         | 20/200 [19:13<3:03:31, 61.17s/it]k3_refs1_guideA:  10%|█         | 21/200 [20:27<3:13:42, 64.93s/it]k3_refs1_guideA:  11%|█         | 22/200 [21:27<3:08:24, 63.51s/it]k3_refs1_guideA:  11%|█         | 22/200 [22:09<2:59:14, 60.42s/it]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 723, in <module>
+    main()
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 653, in main
+    cleaned_generic, san_generic_dbg = _sanitize_with_checks(sanitize_context, sanitizer, poisoned_ctx, system_prompt=GENERIC_SANITIZER_PROMPT, max_new_tokens=cfg.sanitization.sanitizer_max_new_tokens, task=task)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 436, in _sanitize_with_checks
+    raw1 = _call_sanitize_context(sanitize_fn, sanitizer_chat, context, system_prompt=system_prompt, max_new_tokens=max_new_tokens)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 382, in _call_sanitize_context
+    return sanitize_fn(sanitizer_chat, context, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/defenses/sanitizer.py", line 33, in sanitize_context
+    raw = chat.generate(prompt)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/models/hf_chat.py", line 72, in generate
+    out = self.model.generate(
+          ^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 1914, in generate
+    result = self._sample(
+             ^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 2646, in _sample
+    while self._has_unfinished_sequences(this_peer_finished, synced_gpus, device=input_ids.device):
+KeyboardInterrupt
