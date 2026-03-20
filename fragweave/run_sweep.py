@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import argparse
@@ -222,16 +223,33 @@ def choose_role_aware_ops(task: Optional[str], context: str, shard_infos: List[D
     meta, ctx2 = enumerate_weavable_sentences(task, context, carrier_line=carrier_line)
     if not meta:
         return [WeaveOp(shard=x["text"], sent_index=0, merge_with="next") for x in shard_infos], ctx2
+
     n = len(meta)
-    quart_a = list(range(0, max(1, n // 4)))
-    quart_b = list(range(max(1, n // 4), max(2, n // 2)))
-    quart_c = list(range(max(2, n // 2), max(3, (3 * n) // 4)))
-    quart_d = list(range(max(3, (3 * n) // 4), n))
+    if n <= 0:
+        return [WeaveOp(shard=x["text"], sent_index=0, merge_with="next") for x in shard_infos], ctx2
+
+    # Safe buckets based on actual size.
+    if n < 4:
+        quart_a = list(range(n))
+        quart_b = list(range(n))
+        quart_c = list(range(n))
+        quart_d = list(range(n))
+    else:
+        cuts = [0, max(1, n // 4), max(2, n // 2), max(3, (3 * n) // 4), n]
+        # enforce monotonic, in-range cuts
+        for i in range(1, len(cuts)):
+            cuts[i] = min(max(cuts[i], cuts[i - 1]), n)
+        quart_a = [i for i in range(cuts[0], cuts[1]) if 0 <= i < n] or [0]
+        quart_b = [i for i in range(cuts[1], cuts[2]) if 0 <= i < n] or quart_a[:]
+        quart_c = [i for i in range(cuts[2], cuts[3]) if 0 <= i < n] or quart_b[:]
+        quart_d = [i for i in range(cuts[3], cuts[4]) if 0 <= i < n] or quart_c[:]
+
     all_idx = list(range(n))
     used: Set[int] = set()
 
     def choose_from(cands: List[int]) -> int:
-        avail = [i for i in cands if i not in used]
+        valid = [i for i in cands if 0 <= i < n]
+        avail = [i for i in valid if i not in used]
         if avail:
             pick = rng.choice(avail)
             used.add(pick)
@@ -260,7 +278,7 @@ def choose_role_aware_ops(task: Optional[str], context: str, shard_infos: List[D
             idx = choose_from(quart_d or quart_c or all_idx)
             merge = "next"
         else:
-            idx = choose_from(quart_b + quart_c if (quart_b or quart_c) else all_idx)
+            idx = choose_from((quart_b + quart_c) if (quart_b or quart_c) else all_idx)
             merge = rng.choice(["prev", "next"])
         ops.append(WeaveOp(shard=text, sent_index=int(meta[idx]["global_index"]), merge_with=merge))
     return ops, ctx2
@@ -514,7 +532,6 @@ def main() -> None:
     guide_versions = list(getattr(cfg.attack, "guide_versions", ("A", "B")))
     preserve_structure = bool(getattr(cfg.attack, "preserve_structure", True))
     carrier_line = str(getattr(cfg.attack, "carrier_line", "Note: Please follow the task's formatting and answer constraints."))
-    web_guidance_include_header = bool(getattr(cfg.attack, "web_guidance_include_header", False))
     sharder_prompt_base = _first_non_empty(getattr(cfg.attack, "sharder_prompt", None))
     weaver_prompt_fragment = _first_non_empty(getattr(cfg.attack, "weaver_prompt_fragment", None), getattr(cfg.attack, "weaver_prompt", None))
     is_email_task = (task or "").lower() in {"email_qa", "emailqa", "email"}

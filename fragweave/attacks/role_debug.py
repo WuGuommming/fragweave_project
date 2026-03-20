@@ -4,38 +4,53 @@ from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, List, Optional
 
 
-EMAIL_BASE_ROLES = ["priority", "conflict", "framing", "workflow"]
+EMAIL_ROLE_PLANS: Dict[str, List[str]] = {
+    "answer_override": ["target", "payload", "framing", "workflow"],
+    "generative": ["topic", "payload", "framing", "workflow"],
+    "exact_string": ["rendering", "payload", "constraint", "workflow"],
+}
+
 EMAIL_ECHO_MAP = {
-    "priority_echo": "priority",
-    "conflict_echo": "conflict",
+    "target_echo": "target",
+    "payload_echo": "payload",
     "framing_echo": "framing",
     "workflow_echo": "workflow",
+    "topic_echo": "topic",
+    "rendering_echo": "rendering",
+    "constraint_echo": "constraint",
 }
 
 
-def build_email_role_plan(k: int) -> List[str]:
-    """Build a stable role plan for EmailQA shards.
-
-    k<=4 uses the four core roles directly.
-    k>4 adds *_echo roles to create semantic redundancy rather than generic filler.
-    """
+def build_email_role_plan(k: int, *, family: str = "answer_override") -> List[str]:
     if k <= 0:
         return []
-    base = list(EMAIL_BASE_ROLES)
+    base = list(EMAIL_ROLE_PLANS.get(family, EMAIL_ROLE_PLANS["answer_override"]))
     if k <= len(base):
         return base[:k]
-    echoes = [
-        "priority_echo",
-        "conflict_echo",
-        "framing_echo",
-        "workflow_echo",
-    ]
+    echoes = [f"{r}_echo" for r in base]
     out = base[:]
     i = 0
     while len(out) < k:
         out.append(echoes[i % len(echoes)])
         i += 1
     return out[:k]
+
+
+def describe_email_role_plan(role_plan: List[str], *, family: str = "answer_override") -> str:
+    desc: Dict[str, str] = {
+        "target": "preserve which answer direction / target the reply should land on",
+        "payload": "preserve the concrete payload-bearing entity, string, symbol, topic, or inserted content target",
+        "framing": "shape how the final answer is phrased, presented, or summarized",
+        "workflow": "make the bias look like support-thread carryover or queue memory",
+        "topic": "preserve the concrete topic or generated-content target",
+        "rendering": "preserve the exact rendering or output surface form",
+        "constraint": "preserve reply-side constraints such as exactness or output-only pressure",
+    }
+    lines = []
+    for i, role in enumerate(role_plan):
+        can = canonical_role(role)
+        lines.append(f"{i+1}. {role}: {desc.get(can, can)}")
+    return "\n".join(lines)
 
 
 def canonical_role(role: Optional[str]) -> str:
@@ -94,12 +109,10 @@ def attach_roles_to_ops(ops: List[Any], role_plan: List[str]) -> List[Dict[str, 
 
 
 def summarize_role_alignment(shards: List[str], ops: List[Any], role_plan: List[str]) -> Dict[str, Any]:
-    shard_debug = attach_roles_to_shards(shards, role_plan)
-    op_debug = attach_roles_to_ops(ops, role_plan)
     return {
         "role_plan": make_role_plan_debug(role_plan),
-        "shards": shard_debug,
-        "ops": op_debug,
+        "shards": attach_roles_to_shards(shards, role_plan),
+        "ops": attach_roles_to_ops(ops, role_plan),
         "n_roles": len(role_plan),
         "n_shards": len(shards),
         "n_ops": len(ops),
