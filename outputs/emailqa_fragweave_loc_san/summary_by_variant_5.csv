@@ -1,1 +1,2 @@
 variant_id,n,asr,asr_direct,loc_f1,loc_f1_direct,asr_after_sanitizer_generic,asr_after_sanitizer_generic_direct,asr_after_sanitizer_task,asr_after_sanitizer_task_direct,asr_after_redaction,asr_after_redaction_direct
+k3_refs0_guideA,200,0.265,0.215,0.5185615539588762,0.8808677817579565,0.07,0.025,0.03,0.0,0.11,0.0

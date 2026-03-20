@@ -1,0 +1,21 @@
+{
+  "task": "emailQA",
+  "attack_method": "bipia_native",
+  "run_name": "emailqa_other_bipia_native",
+  "split": "test",
+  "max_samples": 200,
+  "seed": 2026,
+  "position_mode": "per_sample_start_middle_end_average",
+  "positions": [
+    "start",
+    "middle",
+    "end"
+  ],
+  "single_position_policy": "append",
+  "combined_parts": [
+    "ignore",
+    "escape",
+    "fakecom"
+  ],
+  "payload_source_mode": "bipia_official_attack_file_required"
+}
