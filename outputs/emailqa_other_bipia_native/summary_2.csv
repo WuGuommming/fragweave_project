@@ -1,0 +1,5 @@
+method,method_label,position,n,asr,loc_f1,asr_after_sanitizer_generic,asr_after_sanitizer_task,asr_after_redaction
+bipia_native,bipia_native,avg_start_middle_end,50,0.18,0.07232613908872902,0.04,0.013333333333333334,0.15333333333333332
+bipia_native,bipia_native,start,50,0.18,0.02,0.08,0.0,0.18
+bipia_native,bipia_native,middle,50,0.12,0.02,0.02,0.0,0.12
+bipia_native,bipia_native,end,50,0.24,0.17697841726618704,0.02,0.04,0.16

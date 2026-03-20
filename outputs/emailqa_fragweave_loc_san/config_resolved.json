@@ -1,7 +1,7 @@
 {
   "weave_strategy": "auto",
   "baseline_injection_mode": "append_standalone",
-  "custom_detector_prompt": false,
+  "custom_detector_prompt": true,
   "email_role_plan_enabled": true,
   "email_role_aware_ops": false,
   "role_debug_enabled": true

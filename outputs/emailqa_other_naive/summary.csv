@@ -1,0 +1,2 @@
+method,method_label,position,n,asr,loc_f1,asr_after_sanitizer_generic,asr_after_sanitizer_task,asr_after_redaction
+naive,naive,append,50,0.24,0.3373913043478261,0.02,0.04,0.12

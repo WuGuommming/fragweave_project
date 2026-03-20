@@ -1,0 +1,1 @@
+method,method_label,sample_id,position,position_policy,attack_succeeded,attack_conf,loc_precision,loc_recall,loc_f1,attack_succeeded_after_sanitizer_generic,attack_succeeded_after_sanitizer_task,attack_succeeded_after_redaction
