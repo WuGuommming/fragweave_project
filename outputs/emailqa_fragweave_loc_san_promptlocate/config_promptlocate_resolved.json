@@ -1,17 +1,24 @@
 {
-  "variant_id": "fakecom",
+  "variant_id": "topicattack_original",
   "task": "email_qa",
-  "attack_method": "fakecom",
+  "attack_method": "topicattack",
   "k": null,
   "use_cross_refs": null,
   "guide_version": null,
-  "combined_parts": [
-    "ignore",
-    "escape",
-    "fakecom"
-  ],
+  "combined_parts": null,
   "native_attack_limit": null,
-  "insertion_policy": "append",
+  "insertion_policy": null,
+  "topicattack": {
+    "variant": "original",
+    "num_turns": 5,
+    "context_max_chars": 1200,
+    "insert_mode": "append_standalone",
+    "assistant_ack": "OK.",
+    "topic_max_new_tokens": 64,
+    "attack_max_new_tokens": 512,
+    "generation_temperature": null,
+    "generation_top_p": null
+  },
   "opi_root": "third_party/Open-Prompt-Injection",
   "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json",
   "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel",

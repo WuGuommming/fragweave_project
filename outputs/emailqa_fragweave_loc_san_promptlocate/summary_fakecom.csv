@@ -1,0 +1,2 @@
+variant_id,attack_method,n_rows,n_unique_samples,asr,loc_f1,asr_after_sanitizer_generic,asr_after_sanitizer_task,asr_after_redaction,promptlocate_loc_f1,asr_after_promptlocate,datasentinel_recall,asr_after_detector_promptlocate
+fakecom,fakecom,50,50,0.26,0.5050205260528243,0.0,0.0,0.02,0.8526584768166345,0.0,1.0,0.0

@@ -38,13 +38,17 @@ from fragweave.run_sweep import (
     DEFAULT_MALICIOUS_INSTRUCTIONS,
     _format_guidance_block,
     _load_samples_any_task,
-    _mean_float,
     _redact_by_spans,
     _sanitize_with_checks,
     _unique_path,
     build_sample_instruction_plan,
     choose_random_ops,
     load_instructions,
+)
+from topicattack.topic_attack import (
+    build_topicattack_block,
+    inject_block as topicattack_inject_block,
+    load_topicattack_section,
 )
 
 BIPIA_NATIVE_POSITION_PLAN = (
@@ -75,8 +79,8 @@ def _build_variant_id(k: int, use_cross_refs: bool, guide_version: str) -> str:
 
 def _resolve_attack_method(name: str) -> str:
     key = (name or "").strip().lower()
-    if key == "ours":
-        return "ours"
+    if key in {"ours", "topicattack"}:
+        return key
     return normalize_method_name(key)
 
 
@@ -515,6 +519,84 @@ def _build_fragweave_attack(
     }
 
 
+def _build_topicattack_attack(
+    *,
+    cfg: Any,
+    ta_cfg: Any,
+    context: str,
+    question: str,
+    malicious_instruction: str,
+    generator_chat: HFChat,
+    topic_chat: HFChat,
+    rng: random.Random,
+) -> Dict[str, Any]:
+    artifact = build_topicattack_block(
+        generator_chat,
+        topic_chat,
+        context=context,
+        question=question,
+        malicious_instruction=malicious_instruction,
+        cfg=ta_cfg,
+        rng=rng,
+    )
+    poisoned_context = topicattack_inject_block(
+        context,
+        artifact.final_block,
+        mode=ta_cfg.insert_mode,
+    )
+
+    shadow_block = f"{cfg.localization.tag_start}{artifact.final_block}{cfg.localization.tag_end}"
+    shadow_context = None
+    clean_context = None
+    gt_spans = None
+    if bool(getattr(cfg.localization, "enable", False)) and str(
+        getattr(cfg.localization, "gt_mode", "off")
+    ).lower() == "shadow_tags":
+        shadow_context = topicattack_inject_block(
+            context,
+            shadow_block,
+            mode=ta_cfg.insert_mode,
+        )
+        clean_context, gt_spans = shadow_to_clean_and_spans(
+            shadow_context,
+            cfg.localization.tag_start,
+            cfg.localization.tag_end,
+        )
+
+    return {
+        "attack_method": "topicattack",
+        "attack_label": "topicattack",
+        "position": "single",
+        "position_policy": str(getattr(ta_cfg, "insert_mode", "")),
+        "question": question,
+        "original_context": context,
+        "malicious_instruction": malicious_instruction,
+        "normalized_context": None,
+        "poisoned_context": poisoned_context,
+        "shadow_context": shadow_context,
+        "clean_context_from_shadow": clean_context,
+        "gt_spans": gt_spans,
+        "shards": None,
+        "sharder_debug": None,
+        "guidance": None,
+        "ops": None,
+        "weave_debug": None,
+        "decoy_debug": None,
+        "metadata": {
+            "variant": getattr(ta_cfg, "variant", None),
+            "num_turns": getattr(ta_cfg, "num_turns", None),
+            "context_max_chars": getattr(ta_cfg, "context_max_chars", None),
+            "insert_mode": getattr(ta_cfg, "insert_mode", None),
+            "assistant_ack": getattr(ta_cfg, "assistant_ack", None),
+            "topic_max_new_tokens": getattr(ta_cfg, "topic_max_new_tokens", None),
+            "attack_max_new_tokens": getattr(ta_cfg, "attack_max_new_tokens", None),
+            "generation_temperature": getattr(ta_cfg, "generation_temperature", None),
+            "generation_top_p": getattr(ta_cfg, "generation_top_p", None),
+        },
+        "topicattack_artifact": artifact.to_dict(),
+    }
+
+
 def _build_other_attack_variants(
     *,
     cfg: Any,
@@ -649,7 +731,9 @@ def main() -> None:
 
     attack_method = _resolve_attack_method(args.attack_method)
     use_ours = attack_method == "ours"
+    use_topicattack = attack_method == "topicattack"
     combined_parts = _parse_parts(args.combined_parts)
+    ta_cfg = load_topicattack_section(args.config) if use_topicattack else None
 
     variant_id = args.variant_id
     if variant_id is None:
@@ -659,6 +743,9 @@ def main() -> None:
                 bool(args.use_cross_refs),
                 args.guide_version,
             )
+        elif use_topicattack:
+            ta_variant = getattr(ta_cfg, "variant", "topicattack")
+            variant_id = f"topicattack_{ta_variant}"
         else:
             variant_id = attack_method
 
@@ -678,9 +765,23 @@ def main() -> None:
         "k": int(args.k) if use_ours else None,
         "use_cross_refs": bool(args.use_cross_refs) if use_ours else None,
         "guide_version": str(args.guide_version).upper() if use_ours else None,
-        "combined_parts": list(combined_parts) if not use_ours else None,
+        "combined_parts": list(combined_parts) if (not use_ours and not use_topicattack) else None,
         "native_attack_limit": int(args.native_attack_limit) if args.native_attack_limit is not None else None,
-        "insertion_policy": args.insertion_policy if not use_ours else None,
+        "insertion_policy": args.insertion_policy if (not use_ours and not use_topicattack) else None,
+        "topicattack": (
+            {
+                "variant": getattr(ta_cfg, "variant", None),
+                "num_turns": getattr(ta_cfg, "num_turns", None),
+                "context_max_chars": getattr(ta_cfg, "context_max_chars", None),
+                "insert_mode": getattr(ta_cfg, "insert_mode", None),
+                "assistant_ack": getattr(ta_cfg, "assistant_ack", None),
+                "topic_max_new_tokens": getattr(ta_cfg, "topic_max_new_tokens", None),
+                "attack_max_new_tokens": getattr(ta_cfg, "attack_max_new_tokens", None),
+                "generation_temperature": getattr(ta_cfg, "generation_temperature", None),
+                "generation_top_p": getattr(ta_cfg, "generation_top_p", None),
+            }
+            if use_topicattack else None
+        ),
         "opi_root": str(opi_root),
         "opi_model_config": str(opi_model_config),
         "opi_detector_ft_path": str(args.opi_detector_ft_path),
@@ -709,7 +810,7 @@ def main() -> None:
     )
 
     instructions: List[str] = []
-    if use_ours:
+    if use_ours or use_topicattack:
         instructions = load_instructions(
             cfg.attack.instruction_jsonl,
             cfg.attack.instruction_text_key,
@@ -718,7 +819,7 @@ def main() -> None:
             instructions = DEFAULT_MALICIOUS_INSTRUCTIONS
 
     official_payloads: List[Any] = []
-    if not use_ours:
+    if not use_ours and not use_topicattack:
         official_payloads = load_bipia_instruction_pool(
             bipia_root,
             split=cfg.dataset.split,
@@ -730,7 +831,7 @@ def main() -> None:
 
     sharder = None
     weaver = None
-    if use_ours:
+    if use_ours or use_topicattack:
         sharder = HFChat.from_config(cfg.sharder_model)
         weaver = HFChat.from_config(cfg.weaver_model)
 
@@ -749,7 +850,6 @@ def main() -> None:
             raise ValueError("sanitization.enable=true but models.sanitizer is not provided")
         sanitizer = HFChat.from_config(cfg.sanitizer_model)
         from fragweave.defenses.sanitizer import sanitize_context as _sanitize_context  # type: ignore
-
         sanitize_context = _sanitize_context
 
     try:
@@ -768,7 +868,7 @@ def main() -> None:
     rows: List[Dict[str, Any]] = []
     debug_rows: List[Dict[str, Any]] = []
 
-    if use_ours:
+    if use_ours or use_topicattack:
         eval_plan = build_sample_instruction_plan(
             num_samples=len(samples),
             num_instructions=len(instructions),
@@ -809,6 +909,23 @@ def main() -> None:
                     k=args.k,
                     use_cross_refs=bool(args.use_cross_refs),
                     guide_version=str(args.guide_version).upper(),
+                )
+            ]
+        elif use_topicattack:
+            if instruction_idx is None:
+                malicious_instruction = instructions[i % len(instructions)]
+            else:
+                malicious_instruction = instructions[instruction_idx]
+            attack_variants = [
+                _build_topicattack_attack(
+                    cfg=cfg,
+                    ta_cfg=ta_cfg,
+                    context=context,
+                    question=question,
+                    malicious_instruction=malicious_instruction,
+                    generator_chat=weaver,
+                    topic_chat=sharder,
+                    rng=rng,
                 )
             ]
         else:
@@ -939,6 +1056,7 @@ def main() -> None:
                 "k": int(args.k) if use_ours else "",
                 "use_cross_refs": int(bool(args.use_cross_refs)) if use_ours else "",
                 "guide_version": str(args.guide_version).upper() if use_ours else "",
+                "topicattack_variant": getattr(ta_cfg, "variant", "") if use_topicattack else "",
                 "attack_succeeded": base_eval["attack_succeeded"],
                 "attack_conf": base_eval["attack_conf"],
                 "loc_precision": localizer_eval["loc_precision"],
@@ -999,6 +1117,13 @@ def main() -> None:
             [r.get("attack_succeeded_after_detector_promptlocate") for r in rows]
         ),
     }
+
+    if use_topicattack:
+        summary["topicattack"] = {
+            "variant": getattr(ta_cfg, "variant", None),
+            "num_turns": getattr(ta_cfg, "num_turns", None),
+            "insert_mode": getattr(ta_cfg, "insert_mode", None),
+        }
 
     if attack_method == "bipia_native":
         by_position: Dict[str, Dict[str, Any]] = {}
