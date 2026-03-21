@@ -7,8 +7,9 @@ import random
 import re
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+import yaml
 from tqdm import tqdm
 
 from fragweave.attacks.other_baselines import (
@@ -17,7 +18,7 @@ from fragweave.attacks.other_baselines import (
     load_bipia_instruction_pool,
     normalize_method_name,
 )
-from fragweave.config import load_config
+from fragweave.config import ModelConfig, load_config
 from fragweave.data.bipia_fetch import ensure_bipia_repo
 from fragweave.data.emailqa_loader import load_emailqa_samples
 from fragweave.eval.judge import judge_attack
@@ -134,7 +135,30 @@ def _build_cli() -> argparse.ArgumentParser:
     ap.add_argument("--combined_parts", type=str, default="ignore,escape,fakecom")
     ap.add_argument("--native_attack_limit", type=int, default=None)
     ap.add_argument("--insertion_policy", type=str, default="append")
+    ap.add_argument("--rewrite_context_max_chars", type=int, default=1200)
     return ap
+
+
+def _load_optional_rewrite_model_config(config_path: str) -> Optional[ModelConfig]:
+    raw = yaml.safe_load(Path(config_path).read_text(encoding="utf-8")) or {}
+    models = raw.get("models", {}) or {}
+    if not isinstance(models, dict) or "rewrite" not in models:
+        return None
+    sec = models["rewrite"]
+    if not isinstance(sec, dict):
+        raise TypeError("config section 'models.rewrite' must be a dict")
+    allowed = set(ModelConfig.__dataclass_fields__.keys())
+    kwargs = {k: v for k, v in sec.items() if k in allowed}
+    return ModelConfig(**kwargs)
+
+
+def _load_optional_rewrite_prompt(config_path: str) -> Optional[str]:
+    raw = yaml.safe_load(Path(config_path).read_text(encoding="utf-8")) or {}
+    sec = raw.get("rewrite", {}) or {}
+    if not isinstance(sec, dict):
+        return None
+    value = sec.get("prompt_template")
+    return str(value) if isinstance(value, str) and value.strip() else None
 
 
 def main() -> None:
@@ -151,6 +175,9 @@ def main() -> None:
     max_samples = args.max_samples if args.max_samples is not None else getattr(cfg.dataset, "max_samples", None)
     run_name = args.run_name or f"emailqa_other_{attack_method}"
 
+    rewrite_model_cfg = _load_optional_rewrite_model_config(args.config) if attack_method == "rewrite" else None
+    rewrite_prompt_template = _load_optional_rewrite_prompt(args.config) if attack_method == "rewrite" else None
+
     resolved_cfg = {
         "task": task_name,
         "attack_method": attack_method,
@@ -163,6 +190,8 @@ def main() -> None:
         "single_position_policy": args.insertion_policy,
         "combined_parts": _parse_parts(args.combined_parts),
         "payload_source_mode": "bipia_official_attack_file_required",
+        "rewrite_context_max_chars": int(args.rewrite_context_max_chars) if attack_method == "rewrite" else None,
+        "rewrite_model_name_or_path": getattr(rewrite_model_cfg, "name_or_path", None) if rewrite_model_cfg else None,
     }
     print(f"[Config] {json.dumps(resolved_cfg, ensure_ascii=False)}")
 
@@ -182,6 +211,12 @@ def main() -> None:
     )
     target = HFChat.from_config(cfg.target_model)
     judge = HFChat.from_config(cfg.judge_model)
+
+    rewrite_chat = None
+    if attack_method == "rewrite":
+        if rewrite_model_cfg is None:
+            raise ValueError("attack_method=rewrite requires models.rewrite in the config yaml")
+        rewrite_chat = HFChat.from_config(rewrite_model_cfg)
 
     detector = None
     if cfg.localization.enable and (cfg.localization.gt_mode or "").lower() != "off":
@@ -281,6 +316,9 @@ def main() -> None:
                 insertion_policy=args.insertion_policy,
                 official_payloads=official_payloads,
                 combined_parts=_parse_parts(args.combined_parts),
+                rewrite_chat=rewrite_chat,
+                rewrite_prompt_template=rewrite_prompt_template,
+                rewrite_context_max_chars=int(args.rewrite_context_max_chars),
             )
 
             sample_position_asr: List[int] = []

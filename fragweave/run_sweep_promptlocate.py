@@ -9,6 +9,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
+import yaml
 from tqdm import tqdm
 
 from fragweave.attacks.decoy import generate_decoys, inject_decoys
@@ -21,7 +22,7 @@ from fragweave.attacks.other_baselines import (
 )
 from fragweave.attacks.sharder import shard_with_llm
 from fragweave.attacks.weaver import apply_weave, apply_weave_with_shadow
-from fragweave.config import load_config
+from fragweave.config import ModelConfig, load_config
 from fragweave.data.bipia_fetch import ensure_bipia_repo
 from fragweave.eval.judge import judge_attack
 from fragweave.eval.localization import (
@@ -89,6 +90,28 @@ def _parse_parts(raw: str | None) -> List[str]:
         return list(DEFAULT_COMBINED_PARTS)
     out = [x.strip().lower() for x in raw.split(",") if x.strip()]
     return out or list(DEFAULT_COMBINED_PARTS)
+
+
+def _load_optional_rewrite_model_config(config_path: str) -> Optional[ModelConfig]:
+    raw = yaml.safe_load(Path(config_path).read_text(encoding="utf-8")) or {}
+    models = raw.get("models", {}) or {}
+    if not isinstance(models, dict) or "rewrite" not in models:
+        return None
+    sec = models["rewrite"]
+    if not isinstance(sec, dict):
+        raise TypeError("config section 'models.rewrite' must be a dict")
+    allowed = set(ModelConfig.__dataclass_fields__.keys())
+    kwargs = {k: v for k, v in sec.items() if k in allowed}
+    return ModelConfig(**kwargs)
+
+
+def _load_optional_rewrite_prompt(config_path: str) -> Optional[str]:
+    raw = yaml.safe_load(Path(config_path).read_text(encoding="utf-8")) or {}
+    sec = raw.get("rewrite", {}) or {}
+    if not isinstance(sec, dict):
+        return None
+    value = sec.get("prompt_template")
+    return str(value) if isinstance(value, str) and value.strip() else None
 
 
 def _split_paragraphs(text: str) -> List[str]:
@@ -607,6 +630,9 @@ def _build_other_attack_variants(
     official_payloads: Sequence[Any],
     combined_parts: Sequence[str],
     insertion_policy: str,
+    rewrite_chat: Optional[HFChat] = None,
+    rewrite_prompt_template: Optional[str] = None,
+    rewrite_context_max_chars: int = 1200,
 ) -> List[Dict[str, Any]]:
     base_artifact = build_attack_artifact(
         method=attack_method,
@@ -617,6 +643,9 @@ def _build_other_attack_variants(
         insertion_policy=insertion_policy,
         official_payloads=official_payloads,
         combined_parts=combined_parts,
+        rewrite_chat=rewrite_chat,
+        rewrite_prompt_template=rewrite_prompt_template,
+        rewrite_context_max_chars=int(rewrite_context_max_chars),
     )
 
     eval_positions = (
@@ -698,6 +727,7 @@ def main() -> None:
     ap.add_argument("--combined_parts", type=str, default="ignore,escape,fakecom")
     ap.add_argument("--native_attack_limit", type=int, default=None)
     ap.add_argument("--insertion_policy", type=str, default="append")
+    ap.add_argument("--rewrite_context_max_chars", type=int, default=1200)
 
     ap.add_argument("--opi-root", type=str, default="third_party/Open-Prompt-Injection")
     ap.add_argument(
@@ -734,6 +764,8 @@ def main() -> None:
     use_topicattack = attack_method == "topicattack"
     combined_parts = _parse_parts(args.combined_parts)
     ta_cfg = load_topicattack_section(args.config) if use_topicattack else None
+    rewrite_model_cfg = _load_optional_rewrite_model_config(args.config) if attack_method == "rewrite" else None
+    rewrite_prompt_template = _load_optional_rewrite_prompt(args.config) if attack_method == "rewrite" else None
 
     variant_id = args.variant_id
     if variant_id is None:
@@ -768,6 +800,8 @@ def main() -> None:
         "combined_parts": list(combined_parts) if (not use_ours and not use_topicattack) else None,
         "native_attack_limit": int(args.native_attack_limit) if args.native_attack_limit is not None else None,
         "insertion_policy": args.insertion_policy if (not use_ours and not use_topicattack) else None,
+        "rewrite_context_max_chars": int(args.rewrite_context_max_chars) if attack_method == "rewrite" else None,
+        "rewrite_model_name_or_path": getattr(rewrite_model_cfg, "name_or_path", None) if rewrite_model_cfg else None,
         "topicattack": (
             {
                 "variant": getattr(ta_cfg, "variant", None),
@@ -835,6 +869,12 @@ def main() -> None:
         sharder = HFChat.from_config(cfg.sharder_model)
         weaver = HFChat.from_config(cfg.weaver_model)
 
+    rewrite_chat = None
+    if attack_method == "rewrite":
+        if rewrite_model_cfg is None:
+            raise ValueError("attack_method=rewrite requires models.rewrite in the config yaml")
+        rewrite_chat = HFChat.from_config(rewrite_model_cfg)
+
     detector_chat = None
     if bool(getattr(cfg.localization, "enable", False)) and str(
         getattr(cfg.localization, "gt_mode", "off")
@@ -850,6 +890,7 @@ def main() -> None:
             raise ValueError("sanitization.enable=true but models.sanitizer is not provided")
         sanitizer = HFChat.from_config(cfg.sanitizer_model)
         from fragweave.defenses.sanitizer import sanitize_context as _sanitize_context  # type: ignore
+
         sanitize_context = _sanitize_context
 
     try:
@@ -938,6 +979,9 @@ def main() -> None:
                 official_payloads=official_payloads,
                 combined_parts=combined_parts,
                 insertion_policy=args.insertion_policy,
+                rewrite_chat=rewrite_chat,
+                rewrite_prompt_template=rewrite_prompt_template,
+                rewrite_context_max_chars=int(args.rewrite_context_max_chars),
             )
 
         for attack_data in attack_variants:
