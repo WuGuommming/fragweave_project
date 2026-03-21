@@ -1,0 +1,2 @@
+variant_id,attack_method,n_rows,n_unique_samples,asr,loc_f1,asr_after_sanitizer_generic,asr_after_sanitizer_task,asr_after_redaction,promptlocate_loc_f1,asr_after_promptlocate,datasentinel_recall,asr_after_detector_promptlocate
+combined,combined,50,50,0.32,0.6088491422060779,0.1,0.06,0.1,0.796607952502924,0.04,1.0,0.04

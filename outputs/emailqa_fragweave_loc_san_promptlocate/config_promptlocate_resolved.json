@@ -1,9 +1,17 @@
 {
-  "variant_id": "k3_refs1_guideA",
+  "variant_id": "fakecom",
   "task": "email_qa",
-  "k": 3,
-  "use_cross_refs": true,
-  "guide_version": "A",
+  "attack_method": "fakecom",
+  "k": null,
+  "use_cross_refs": null,
+  "guide_version": null,
+  "combined_parts": [
+    "ignore",
+    "escape",
+    "fakecom"
+  ],
+  "native_attack_limit": null,
+  "insertion_policy": "append",
   "opi_root": "third_party/Open-Prompt-Injection",
   "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json",
   "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel",

@@ -1,0 +1,9 @@
+[Config] {"variant_id": "fakecom", "task": "email_qa", "attack_method": "fakecom", "k": null, "use_cross_refs": null, "guide_version": null, "combined_parts": ["ignore", "escape", "fakecom"], "native_attack_limit": null, "insertion_policy": "append", "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0}
+Special tokens have been added in the vocabulary, make sure the associated word embeddings are fine-tuned or trained.
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:05<00:16,  5.47s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:11<00:11,  5.62s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:16<00:05,  5.69s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:21<00:00,  5.20s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:21<00:00,  5.35s/it]
+fakecom:   0%|          | 0/50 [00:00<?, ?it/s]/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/configuration_utils.py:562: UserWarning: `do_sample` is set to `False`. However, `top_k` is set to `20` -- this flag is only used in sample-based generation modes. You should set `do_sample=True` or unset `top_k`.
+  warnings.warn(
+
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s][A
+Loading checkpoint shards:  50%|█████     | 1/2 [00:10<00:10, 10.06s/it][A
+Loading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  6.91s/it][ALoading checkpoint shards: 100%|██████████| 2/2 [00:14<00:00,  7.38s/it]
