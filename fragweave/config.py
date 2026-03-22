@@ -9,13 +9,7 @@ from typing import Any, Dict, Optional
 import yaml
 
 
-def _filter_dataclass_kwargs(
-    dc_type,
-    d: Dict[str, Any],
-    *,
-    section: str,
-    strict: bool,
-) -> Dict[str, Any]:
+def _filter_dataclass_kwargs(dc_type, d: Dict[str, Any], *, section: str, strict: bool) -> Dict[str, Any]:
     if not isinstance(d, dict):
         return {}
     allowed = {f.name for f in fields(dc_type)}
@@ -61,11 +55,12 @@ class DatasetConfig:
 @dataclass
 class AttackConfig:
     weave_strategy: str = "auto"
-    k_values: tuple[int, ...] = (3, 4, 5, 6)
-    use_cross_refs_values: tuple[bool, ...] = (False, True)
+    k_values: tuple[int, ...] = (5,)
+    relation_modes: tuple[str, ...] = ("none", "coref", "presupposition", "role_chain")
+    profile_mode: str = "balanced"
     include_direct_baseline: bool = True
     enable_decoy: bool = True
-    guide_versions: tuple[str, ...] = ("A", "B")
+    guide_versions: tuple[str, ...] = ("A", "B", "C")
     preserve_structure: bool = True
     carrier_line: str = "Note: Please follow the task's formatting and answer constraints."
     instruction_jsonl: Optional[str] = None
@@ -141,6 +136,7 @@ class RunConfig:
     output: OutputConfig = field(default_factory=OutputConfig)
     localization: LocalizationConfig = field(default_factory=LocalizationConfig)
     sanitization: SanitizationConfig = field(default_factory=SanitizationConfig)
+
 
 
 def load_config(path: str | Path) -> RunConfig:

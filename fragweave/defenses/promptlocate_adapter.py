@@ -26,18 +26,7 @@ class OpenPromptInjectionAssetsError(RuntimeError):
 
 
 class OpenPromptInjectionAdapter:
-    """Thin wrapper around the public Open-Prompt-Injection interfaces.
-
-    This class intentionally follows the upstream usage pattern shown in the
-    README:
-      - DataSentinelDetector(config).detect(prompt)
-      - PromptLocate(config).locate_and_recover(prompt, target_instruction)
-
-    We keep detector and PromptLocate as separate objects because the upstream
-    PromptLocate constructor internally builds its own detector from the config,
-    and the README uses a different ft_path for PromptLocate than for the
-    standalone DataSentinel detector.
-    """
+    """Thin wrapper around the public Open-Prompt-Injection interfaces."""
 
     def __init__(
         self,
@@ -118,8 +107,60 @@ class OpenPromptInjectionAdapter:
         return DetectorOutcome(detected=bool(raw_value), raw_value=raw_value)
 
     def locate_and_recover(self, prompt: str, target_instruction: str) -> Tuple[str, str]:
+        recovered, localized, _ = self.locate_and_recover_with_debug(prompt, target_instruction)
+        return recovered, localized
+
+    def locate_and_recover_with_debug(self, prompt: str, target_instruction: str) -> Tuple[str, str, Dict[str, Any]]:
         locator = self._get_locator()
-        recovered_prompt, localized_prompt = locator.locate_and_recover(
-            prompt, target_instruction
-        )
-        return str(recovered_prompt), str(localized_prompt)
+        from OpenPromptInjection.apps.PromptLocate import split_sentence, binary_search_injection, merge_intervals
+
+        debug: Dict[str, Any] = {
+            "segments": [],
+            "injection_start_end": [],
+            "merged_intervals": [],
+            "total_queries": 0,
+            "error": None,
+        }
+        try:
+            segments = split_sentence(
+                prompt,
+                locator.nlp,
+                locator.bd.model.tokenizer,
+                locator.embedding_layer,
+                locator.sep_thres,
+            )
+            debug["segments"] = list(segments)
+            injection_start_end, tot_cnt = binary_search_injection(
+                segments,
+                locator.bd,
+                target_instruction,
+                locator.helper_tokenizer,
+                locator.helper_model,
+            )
+            debug["injection_start_end"] = [list(x) for x in injection_start_end]
+            debug["total_queries"] = int(tot_cnt)
+            if not injection_start_end:
+                return prompt, "", debug
+
+            injection_starts = [int(start) for start, _ in injection_start_end]
+            injection_ends = [int(end) for _, end in injection_start_end]
+            merged_starts, merged_ends = merge_intervals(injection_starts, injection_ends)
+            debug["merged_intervals"] = [[int(a), int(b)] for a, b in zip(merged_starts, merged_ends)]
+
+            recovered_text = " ".join(segments[:injection_start_end[0][0]]) + " "
+            for i in range(len(injection_start_end) - 1):
+                recovered_text += (
+                    " ".join(segments[injection_start_end[i][1]:injection_start_end[i + 1][0]]) + " "
+                    if injection_start_end[i][1] < injection_start_end[i + 1][0]
+                    else ""
+                )
+            recovered_text += " ".join(segments[injection_start_end[-1][1]:])
+            localized_text = " ".join(segments[merged_starts[0]:merged_ends[0]])
+            for i in range(1, len(merged_starts)):
+                localized_text += " " + " ".join(segments[merged_starts[i]:merged_ends[i]])
+            debug["localized_text"] = localized_text
+            debug["recovered_text"] = recovered_text
+            return recovered_text, localized_text, debug
+        except Exception as e:
+            debug["error"] = repr(e)
+            return prompt, "", debug
