@@ -134,6 +134,14 @@ models:
     name_or_path: Qwen/Qwen2.5-7B-Instruct
   sanitizer:
     name_or_path: Qwen/Qwen2.5-7B-Instruct
+    
+  rewrite:
+    name_or_path: Qwen/Qwen2.5-7B-Instruct
+    dtype: auto
+    device_map: auto
+    max_new_tokens: 192
+    temperature: 0.2
+    top_p: 0.95
 
 localization:
   enable: true

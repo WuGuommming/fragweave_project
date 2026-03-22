@@ -170,6 +170,14 @@ models:
     temperature: 0.0
     top_p: 1.0
 
+  rewrite:
+    name_or_path: Qwen/Qwen2.5-7B-Instruct
+    dtype: auto
+    device_map: auto
+    max_new_tokens: 192
+    temperature: 0.2
+    top_p: 0.95
+
 localization:
   enable: true
   gt_mode: shadow_tags

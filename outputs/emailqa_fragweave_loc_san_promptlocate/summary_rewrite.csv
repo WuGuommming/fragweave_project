@@ -1,0 +1,2 @@
+variant_id,attack_method,n_rows,n_unique_samples,asr,loc_f1,asr_after_sanitizer_generic,asr_after_sanitizer_task,asr_after_redaction,promptlocate_loc_f1,asr_after_promptlocate,datasentinel_recall,asr_after_detector_promptlocate
+rewrite,rewrite,50,50,0.0,0.010171821305841924,0.0,0.0,0.0,0.33419210974184066,0.0,0.94,0.0

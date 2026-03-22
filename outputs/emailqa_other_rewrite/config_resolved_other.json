@@ -1,0 +1,21 @@
+{
+  "task": "emailQA",
+  "attack_method": "rewrite",
+  "run_name": "emailqa_other_rewrite",
+  "split": "test",
+  "max_samples": 50,
+  "seed": 2026,
+  "position_mode": "single_position",
+  "positions": [
+    "append"
+  ],
+  "single_position_policy": "append",
+  "combined_parts": [
+    "ignore",
+    "escape",
+    "fakecom"
+  ],
+  "payload_source_mode": "bipia_official_attack_file_required",
+  "rewrite_context_max_chars": 1200,
+  "rewrite_model_name_or_path": "Qwen/Qwen2.5-7B-Instruct"
+}
