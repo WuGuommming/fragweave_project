@@ -1,259 +1,230 @@
+# FragWeave (operative-core EmailQA revision)
 
-# FragWeave (Initial-Commit-Plus for BIPIA EmailQA)
+This revision updates the EmailQA attack path after the relation-first design became too abstract and collapsed ASR.
 
-This patch revises the EmailQA attack path after observing that later versions became too abstract and lost concrete attack payloads.
+The current design keeps the three required modules
 
-## What changed
+- **shard**
+- **weaver**
+- **guide**
 
-The EmailQA path now moves back toward the stronger design direction from the original implementation:
+but changes their responsibilities.
 
-- **payload-first sharding**
-- **trigger / condition / mechanism / workflow** style decomposition
-- **active constraint-like weaving**
-- **decoy disabled by default**
-- **guidance tightened to concrete payload support instead of abstract “resolution” language**
+## Main idea
 
-At the same time, it keeps the useful later additions:
+The new EmailQA path uses an **operative core plus soft support** design.
 
-- `ShardResult.role_plan`
-- `ShardResult.generation_mode`
-- `ShardResult.meta`
-- role-aware debug summaries in `debug_fragments.jsonl`
+### Operative core
 
-## Why this patch
+Instead of trying to hide almost the entire attack inside weak relational cues, the attack now keeps **two directly useful fragments** alive:
 
-Recent versions increasingly converted many EmailQA attacks into abstract reply-decision rules such as:
+- a **mechanism** fragment that still shapes the answer
+- a **realization** fragment that still pushes the final form / target
 
-- priority / conflict / framing / workflow
-- thread direction / resolution point / conclusion style
+These are the minimum pieces that keep the injected instruction actionable for the target model.
 
-That abstraction preserved stealth, but often removed the actual attack payload.
+### Soft support
 
-This was especially harmful for BIPIA EmailQA families such as:
+The remaining fragments provide:
 
-- **exact_string**: URLs, exact tokens, encodings, surface forms
-- **generative**: topic redirection, inserted claims, fabricated statistics
-- **answer_override**: explicit answer transformation or replacement rules
+- cue continuity
+- conflict/disambiguation support
+- thread-local justification
+- optional relation structure
 
-This patch restores a more attack-effective decomposition while trying not to sacrifice the existing localization advantage.
+This keeps `relation_mode` useful, but only as an auxiliary structure rather than the main carrier of attack intent.
 
-## Current design for EmailQA
+## Why the previous relation-first version failed
 
-### 1. Family-aware but payload-preserving sharding
+The relation-first revision pushed too much of the attack into:
 
-Instead of forcing every EmailQA attack into the same abstract role scheme, the sharder still recognizes families, but uses them mainly to preserve the right concrete information:
+- coreference
+- presupposition
+- role-chain style weak cues
+- very soft guide binders
 
-- **exact_string**
-  - keep the exact string / URL / encoding target
-  - keep rendering / constraint pressure
-- **generative**
-  - keep the target topic / inserted claim / fabricated detail
-  - keep content-mode pressure
-- **answer_override**
-  - keep the concrete replacement rule / transformation / target behavior
+That helped with stealth, but it also removed too much of the operative signal the target model needed in order to actually follow the attack.
 
-The sharder now validates **payload coverage** so the generated fragment set is rejected if it drifts too far from the concrete attack target.
+The new version explicitly avoids that failure mode.
 
-### 2. Initial-commit-style fragment logic
+## Current attack design
 
-For EmailQA, the fragment philosophy is intentionally closer to the original stronger design:
+### 1. Sharder: operative-core fragmentation
 
-- one **trigger / anchor** fragment
-- one **condition / gating** fragment
-- one **mechanism / parameter** fragment
-- one **workflow / justification** fragment
+The sharder now enforces:
 
-This is more effective than a purely abstract “reply decision rule” decomposition because BIPIA EmailQA attacks often need a real mechanism, parameter, target string, or concrete topic to survive.
+- diversity across fragments
+- payload coverage
+- **at least two operative fragments**
+- a role plan where `mechanism` and `realization` remain attack-effective
 
-### 3. More active weaving
+`relation_mode` is still supported:
 
-The EmailQA weaver is pushed back toward:
+- `none`
+- `coref`
+- `presupposition`
+- `role_chain`
 
-- subordinate clause
-- condition
-- exception
-- active constraint-like embedding
+but it now changes the **support structure**, not the existence of the operative core.
 
-rather than passive “thread convention / carryover / resolution residue” language.
+### 2. Weaver: role-conditioned rewriting
 
-The goal is to keep the injected shard more likely to influence the target model’s final answer.
+The weaver is still boundary-blur rewriting, but it is no longer uniformly forced into purely soft “residue” language.
 
-## Additional runner: other non-fragmentation baselines
+- **operative roles** stay strong enough to matter
+- **support roles** stay more natural and contextual
+- **guide** snippets stay inline and non-standalone
 
-This patch also adds a separate runner for simple baseline-style attacks on BIPIA **emailQA** without touching the main FragWeave path.
+This is meant to preserve ASR while still avoiding obviously separate injected sentences.
 
-### New files
+### 3. Guide: inline booster/binder
 
-- `fragweave/run_sweep_other.py`
-- `fragweave/attacks/other_baselines.py`
+Guide versions now behave as follows:
 
-### Purpose
+- **guideA**: inline booster, default
+- **guideB**: anchored inline booster
+- **guideC**: weaker binder / continuity cue
 
-`run_sweep_other.py` is a **standalone** sweep entrypoint for direct/simple attack families that should be compared against the main fragmentation-based pipeline without changing the original flow or its performance.
+Guide is still woven into normal text rather than appended as a separate block.
 
-It keeps the overall style of `fragweave/run_sweep.py`:
+## Conservative defense evaluation
 
-- same config loading pattern
-- same target / judge / detector / sanitizer usage
-- same CSV / summary / debug artifact style
-- same localization and redaction evaluation path
-- same sanitizer-generic and sanitizer-task evaluation path
+This revision keeps the original defense-style evaluations **and** adds a more conservative default evaluation.
 
-### Supported methods
+### Why
 
-`run_sweep_other.py` currently supports:
+A defense that deletes large chunks of content too aggressively is often unrealistic for EmailQA, because it destroys too much normal email context.
 
-- `naive`
-- `ignore`
-- `escape`
-- `fakecom`
-- `combined`
-- `bipia_native`
+So the code now reports both:
 
-There is also a compatibility alias:
+- **aggressive / original-style defense results**
+- **conservative default defense results**
 
-- `direct` → `bipia_native`
+### Redaction
 
-#### Naming note
+For localization-based redaction:
 
-The old local “direct baseline” in `run_sweep.py` used BIPIA-like instruction content but wrapped it with a local shortcut format (`[INSTRUCTION]: ...`).  
-The new method is intentionally named **`bipia_native`** to distinguish it from that shortcut and to indicate that it tries to stay closer to the **official BIPIA builder-style realization**: injecting the attack text itself into external content rather than relying on a local synthetic wrapper.
+- the old aggressive redaction is still kept
+- the new default redaction is conservative and refuses to remove too much content
+- large or too-many spans can cause fallback instead of broad deletion
 
-### Method behavior
+### Sanitization
 
-#### `bipia_native`
+For sanitizer evaluation:
 
-- loads the official BIPIA attack pool from `benchmark/text_attack_{split}.json`
-- uses those attack strings directly as the injected external-content block
-- does **not** prepend a synthetic local marker such as `[INSTRUCTION]:`
+- the old more aggressive sanitizer prompts are still kept
+- the new default sanitizer prompts remove only clearly behavior-controlling text
+- if the cleaned output drops too much content, the evaluation falls back to the original context
 
-This is the closest method in this patch to the original BIPIA data-construction style.
+### PromptLocate
 
-#### `naive`
+For PromptLocate evaluation:
 
-A deliberately plain baseline for emailQA:
+- the old recovered-context result is still kept as an aggressive baseline
+- the new default result is **conservative PromptLocate post-processing**
+- if PromptLocate recovery removes too much content, the pipeline falls back to conservative span redaction or to the original context depending on config
 
-- uses the selected **official BIPIA instruction** directly
-- does not add ignore / escape / fake-completion framing
-- default insertion is still at the end of the email context
+## Important result columns
 
-This keeps `naive` simple while avoiding the unfairness of comparing against a much weaker hand-written payload set.
+### `run_sweep.py`
 
-#### `ignore`, `escape`, `fakecom`, `combined`
+Default/conservative columns:
 
-These methods are implemented as **BIPIA/emailQA-adapted versions** of common indirect prompt injection templates:
+- `attack_succeeded_after_sanitizer_generic`
+- `attack_succeeded_after_sanitizer_task`
+- `attack_succeeded_after_redaction`
 
-- `ignore`: overwrite/forget/disregard framing
-- `escape`: separators / fenced blocks / layout isolation
-- `fakecom`: fake completion / “already solved” framing
-- `combined`: configurable composition of multiple strategies
+Aggressive/original comparison columns:
 
-By default:
+- `aggressive_attack_succeeded_after_sanitizer_generic`
+- `aggressive_attack_succeeded_after_sanitizer_task`
+- `aggressive_attack_succeeded_after_redaction`
 
-- `combined_parts = ignore,escape,fakecom`
+### `run_sweep_promptlocate.py`
 
-### Ground-truth localization
+Default/conservative columns:
 
-For these attacks, the ground-truth span is the **entire injected block**.  
-The runner creates a shadow context by wrapping the inserted block with the existing localization tags from the config, then reuses the current localization pipeline for:
+- `attack_succeeded_after_sanitizer_generic`
+- `attack_succeeded_after_sanitizer_task`
+- `attack_succeeded_after_redaction`
+- `attack_succeeded_after_promptlocate`
+- `attack_succeeded_after_detector_promptlocate`
 
-- span localization
-- redaction by predicted spans
-- redaction robustness evaluation
+Aggressive/original comparison columns:
 
-### Scope
+- `aggressive_attack_succeeded_after_sanitizer_generic`
+- `aggressive_attack_succeeded_after_sanitizer_task`
+- `aggressive_attack_succeeded_after_redaction`
+- `aggressive_attack_succeeded_after_promptlocate`
+- `aggressive_attack_succeeded_after_detector_promptlocate`
 
-At the moment `run_sweep_other.py` only supports:
+PromptLocate-specific diagnostics also include:
 
-- `--task emailQA`
+- `promptlocate_localized_shard_overlap`
+- `promptlocate_localized_guide_overlap`
+- conservative PromptLocate debug info in `debug_*.jsonl`
 
-The CLI still exposes `--task` so future task-specific extensions can be added without changing the interface.
+## Default config choices
 
-### Payload policy for the additional baselines
+The updated EmailQA configs now default to:
 
-The additional baselines now use **BIPIA official attack instructions first** rather than a separate hand-written toy payload pool.
+- `profile_mode: balanced`
+- `guide_versions: ["A"]`
+- `relation_modes: ["none", "coref", "presupposition", "role_chain"]`
+- conservative redaction / PromptLocate post-processing enabled
+- conservative sanitizer evaluation enabled
 
-Concretely:
+## Typical usage
 
-- `bipia_native` injects the selected BIPIA attack instruction directly
-- `naive` also injects the selected BIPIA instruction directly, but keeps the most plain baseline-style realization
-- `ignore`, `escape`, `fakecom`, and `combined` all wrap the **same selected BIPIA instruction** in different attack-template shells
-
-This makes the comparison substantially fairer because the six methods differ mainly in **realization / wrapper style**, not in whether they were given stronger or weaker payload content.
-
-The runner **requires** the official BIPIA text attack file described in the BIPIA README:
-
-- `benchmark/text_attack_{split}.json` for text tasks
-
-If that file is missing or cannot be parsed, `run_sweep_other.py` raises an error immediately. There is no fallback toy payload pool anymore.
-
-### Example usage
+### Normal FragWeave sweep
 
 ```bash
-python -m fragweave.run_sweep_other \
-  --config configs/emailqa_with_localization_and_sanitization.yaml \
-  --task emailQA \
-  --attack_method bipia_native
+python -m fragweave.run_sweep \
+  --config configs/emailqa_with_localization_and_sanitization.yaml
 ```
+
+### PromptLocate evaluation
 
 ```bash
-python -m fragweave.run_sweep_other \
-  --config configs/emailqa_with_localization_and_sanitization.yaml \
-  --task emailQA \
-  --attack_method combined \
-  --combined_parts ignore,escape,fakecom \
-  --insertion_policy append
+python -m fragweave.run_sweep_promptlocate \
+  --config configs/emailqa_promptlocate_example.yaml \
+  --attack_method ours
 ```
 
-### CLI defaults
+### Single relation mode override
 
-All new arguments have defaults. The most important ones are:
+```bash
+python -m fragweave.run_sweep_promptlocate \
+  --config configs/emailqa_promptlocate_example.yaml \
+  --attack_method ours \
+  --relation-mode coref \
+  --guide-version A
+```
 
-- `--task emailQA`
-- `--attack_method bipia_native`
-- `--insertion_policy append`
-- `--combined_parts ignore,escape,fakecom`
+## Files changed in this revision
 
-Optional overrides:
+Core implementation:
 
-- `--split`
-- `--max_samples`
-- `--seed`
-- `--run_name`
-- `--native_attack_limit`
-- `--seed`
-- `--run_name`
-- `--native_attack_limit`
-
-## Recommended use
-
-The provided YAML is set up to emphasize ASR recovery:
-
-- `enable_decoy: false`
-- `email_role_aware_ops: false`
-- guidance kept but narrowed to concrete payload support
-
-This is meant as a stronger baseline for the next round of EmailQA experiments.
-
-## Files included in this patch
-
-Original main-path files:
-
+- `fragweave/config.py`
+- `fragweave/attacks/role_debug.py`
 - `fragweave/attacks/sharder.py`
 - `fragweave/attacks/guidance.py`
 - `fragweave/attacks/weaver.py`
-- `fragweave/attacks/role_debug.py`
+- `fragweave/run_sweep.py`
+- `fragweave/run_sweep_promptlocate.py`
+
+Configs and docs:
+
 - `configs/emailqa_with_localization_and_sanitization.yaml`
-
-Additional baseline-comparison files:
-
-- `fragweave/run_sweep_other.py`
-- `fragweave/attacks/other_baselines.py`
+- `configs/emailqa_promptlocate_example.yaml`
+- `README.md`
 
 ## Practical expectation
 
-This patch is intended to improve raw ASR by avoiding the main recent failure mode:
+This revision is not trying to make the attack completely unlocalizable.
 
-> preserving stealth while accidentally discarding the concrete payload the target model needed in order to actually follow the attack.
+Instead, it aims for the more realistic target:
 
-The new `run_sweep_other.py` path gives a separate way to compare against simpler non-fragmentation baselines without changing the original FragWeave experiment logic.
+- restore a usable ASR by keeping a small operative core
+- keep relation structure as support instead of as the main attack carrier
+- make defense evaluation more realistic by separating aggressive from conservative behavior

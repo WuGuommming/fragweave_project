@@ -40,5 +40,6 @@
   "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel",
   "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate",
   "opi_helper_model": "gpt2",
-  "opi_sep_thres": 0.0
+  "opi_sep_thres": 0.0,
+  "promptlocate_conservative_enable": true
 }

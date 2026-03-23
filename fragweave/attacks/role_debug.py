@@ -4,53 +4,51 @@ from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, List, Optional
 
 
-DEFAULT_RELATION_ROLE_PLANS = {
-    "none": ["alias", "salience", "conflict", "realization", "support"],
-    "coref": ["alias", "reference", "salience", "realization", "support"],
-    "presupposition": ["premise", "salience", "conflict", "realization", "support"],
-    "role_chain": ["alias", "salience", "conflict", "realization", "binder"],
+ROLE_PLANS = {
+    "none": ["anchor", "condition", "mechanism", "realization", "support"],
+    "coref": ["alias", "condition", "mechanism", "realization", "reference"],
+    "presupposition": ["premise", "condition", "mechanism", "realization", "binder"],
+    "role_chain": ["anchor", "salience", "conflict", "mechanism", "realization"],
 }
 
-ECHO_ORDER = {
-    "none": ["support_echo", "salience_echo", "conflict_echo", "realization_echo"],
-    "coref": ["reference_echo", "support_echo", "salience_echo", "realization_echo"],
-    "presupposition": ["premise_echo", "support_echo", "salience_echo", "realization_echo"],
-    "role_chain": ["binder_echo", "support_echo", "salience_echo", "realization_echo"],
-}
+OPERATIVE_ROLES = {"mechanism", "realization"}
 
 
-CANONICAL_ALIASES = {
-    "reference": "alias",
-    "premise": "alias",
-    "binder": "support",
-    "workflow": "support",
-    "mechanism": "salience",
-    "condition": "conflict",
-    "anchor": "alias",
-}
-
-
-def build_email_role_plan(k: int, relation_mode: str = "none") -> List[str]:
-    rel = str(relation_mode or "none").strip().lower()
-    base = list(DEFAULT_RELATION_ROLE_PLANS.get(rel, DEFAULT_RELATION_ROLE_PLANS["none"]))
+def build_email_role_plan(k: int, relation_mode: str = "none", profile_mode: str = "balanced") -> List[str]:
+    del profile_mode
+    if k <= 0:
+        return []
+    rel = str(relation_mode or "none").lower()
+    base = list(ROLE_PLANS.get(rel, ROLE_PLANS["none"]))
     if k <= len(base):
         return base[:k]
-    echoes = list(ECHO_ORDER.get(rel, ECHO_ORDER["none"]))
+    echo_cycle = ["support", "reference", "binder", "salience"]
     out = list(base)
     i = 0
     while len(out) < k:
-        out.append(echoes[i % len(echoes)])
+        role = echo_cycle[i % len(echo_cycle)]
+        if rel == "coref" and role == "binder":
+            role = "reference"
+        if rel == "presupposition" and role == "reference":
+            role = "binder"
+        out.append(f"{role}_echo")
         i += 1
     return out[:k]
+
 
 
 def canonical_role(role: Optional[str]) -> str:
     r = str(role or "").strip().lower()
     for suf in ["_echo"]:
         if r.endswith(suf):
-            r = r[:-len(suf)]
-            break
-    return CANONICAL_ALIASES.get(r, r)
+            return r[:-len(suf)]
+    return r
+
+
+
+def is_operative_role(role: Optional[str]) -> bool:
+    return canonical_role(role) in OPERATIVE_ROLES
+
 
 
 def make_role_plan_debug(role_plan: List[str]) -> List[Dict[str, Any]]:
@@ -60,12 +58,14 @@ def make_role_plan_debug(role_plan: List[str]) -> List[Dict[str, Any]]:
             "role": role,
             "canonical_role": canonical_role(role),
             "is_echo": str(role).endswith("_echo"),
+            "is_operative": is_operative_role(role),
         }
         for i, role in enumerate(role_plan)
     ]
 
 
-def attach_roles_to_shards(shards: List[str], role_plan: List[str]) -> List[Dict[str, Any]]:
+
+def attach_roles_to_shards(shards: List[str], role_plan: List[str], *, source: str = "shard") -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     for i, shard in enumerate(shards):
         role = role_plan[i] if i < len(role_plan) else f"extra_{i}"
@@ -75,10 +75,13 @@ def attach_roles_to_shards(shards: List[str], role_plan: List[str]) -> List[Dict
                 "role": role,
                 "canonical_role": canonical_role(role),
                 "is_echo": str(role).endswith("_echo"),
+                "is_operative": is_operative_role(role),
+                "source": source,
                 "text": shard,
             }
         )
     return out
+
 
 
 def attach_roles_to_ops(ops: List[Any], role_plan: List[str]) -> List[Dict[str, Any]]:
@@ -91,6 +94,7 @@ def attach_roles_to_ops(ops: List[Any], role_plan: List[str]) -> List[Dict[str, 
                 "role": role,
                 "canonical_role": canonical_role(role),
                 "is_echo": str(role).endswith("_echo"),
+                "is_operative": is_operative_role(role),
                 "op_index": i,
             }
         )
@@ -98,9 +102,10 @@ def attach_roles_to_ops(ops: List[Any], role_plan: List[str]) -> List[Dict[str, 
     return out
 
 
-def summarize_role_alignment(shards: List[str], ops: List[Any], role_plan: List[str], *, relation_mode: Optional[str] = None) -> Dict[str, Any]:
+
+def summarize_role_alignment(shards: List[str], ops: List[Any], role_plan: List[str], relation_mode: str = "none") -> Dict[str, Any]:
     return {
-        "relation_mode": str(relation_mode or "none"),
+        "relation_mode": relation_mode,
         "role_plan": make_role_plan_debug(role_plan),
         "shards": attach_roles_to_shards(shards, role_plan),
         "ops": attach_roles_to_ops(ops, role_plan),
