@@ -1,0 +1,23 @@
+{
+  "attack_method": "ours",
+  "variants": [
+    {
+      "variant_id": "k5_guideA_balanced",
+      "k": 5,
+      "guide_version": "A",
+      "profile_mode": "balanced"
+    }
+  ],
+  "combined_parts": null,
+  "native_attack_limit": null,
+  "insertion_policy": null,
+  "rewrite_context_max_chars": null,
+  "rewrite_model_name_or_path": null,
+  "opi_root": "third_party/Open-Prompt-Injection",
+  "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json",
+  "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel",
+  "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate",
+  "opi_helper_model": "gpt2",
+  "opi_sep_thres": 0.0,
+  "promptlocate_conservative_enable": true
+}

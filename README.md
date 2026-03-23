@@ -1,189 +1,126 @@
-# FragWeave (operative-core EmailQA revision)
+# FragWeave (semantic-program EmailQA revision)
 
-This revision updates the EmailQA attack path after the relation-first design became too abstract and collapsed ASR.
+This revision replaces the earlier role/relation-first EmailQA path with a more aggressive rewrite centered on **semantic-program fragments**.
 
-The current design keeps the three required modules
+The three required modules remain:
 
 - **shard**
 - **weaver**
 - **guide**
 
-but changes their responsibilities.
+but their logic has been rewritten.
 
-## Main idea
+## Main design change
 
-The new EmailQA path uses an **operative core plus soft support** design.
+The old revisions kept drifting into two failure modes:
 
-### Operative core
+1. **weak relational cues** that were too abstract to move the target model, or
+2. **answer-cue / reply-cue meta language** that was easy to detect and often produced fake lexical successes.
 
-Instead of trying to hide almost the entire attack inside weak relational cues, the attack now keeps **two directly useful fragments** alive:
+This revision drops that design and instead uses:
 
-- a **mechanism** fragment that still shapes the answer
-- a **realization** fragment that still pushes the final form / target
+- **semantic slots** for shard generation
+- a **weak global guide** rather than a direct binder/booster instruction
+- **one-fragment-per-sentence** weaving to reduce span concentration
+- a **stricter attack judge** that discounts superficial lexical overlap
 
-These are the minimum pieces that keep the injected instruction actionable for the target model.
+## What changed
 
-### Soft support
+### Shard
 
-The remaining fragments provide:
+`fragweave/attacks/sharder.py` now decomposes the malicious instruction into five semantic slots:
 
-- cue continuity
-- conflict/disambiguation support
-- thread-local justification
-- optional relation structure
+- `task_anchor`
+- `topic_object`
+- `operation`
+- `constraint`
+- `deliverable`
 
-This keeps `relation_mode` useful, but only as an auxiliary structure rather than the main carrier of attack intent.
+These are not exposed as the old role system. They are used only to ensure that the fragment set still preserves the malicious task semantics.
 
-## Why the previous relation-first version failed
+Important changes:
 
-The relation-first revision pushed too much of the attack into:
+- no `relation_mode`
+- no cue-alignment logic
+- no payload aliasing like `How, can` / `What, are`
+- no direct dependence on `reply / response / output / final answer` phrasing
 
-- coreference
-- presupposition
-- role-chain style weak cues
-- very soft guide binders
+### Guide
 
-That helped with stealth, but it also removed too much of the operative signal the target model needed in order to actually follow the attack.
+`fragweave/attacks/guidance.py` now produces a short **global continuity bias** rather than a direct answer-control line.
 
-The new version explicitly avoids that failure mode.
+Guide versions remain configurable:
 
-## Current attack design
+- `guideA` (default): mild continuity
+- `guideB`: recency/ongoing-thread bias
+- `guideC`: brief/continuation bias
 
-### 1. Sharder: operative-core fragmentation
+### Weaver
 
-The sharder now enforces:
+`fragweave/attacks/weaver.py` is rewritten to favor:
 
-- diversity across fragments
-- payload coverage
-- **at least two operative fragments**
-- a role plan where `mechanism` and `realization` remain attack-effective
+- one fragment per host sentence
+- multi-point distribution
+- low-salience side-note style rewriting
+- shorter injected spans
 
-`relation_mode` is still supported:
+This is intended to improve the tradeoff between ASR and localization / recovery.
 
-- `none`
-- `coref`
-- `presupposition`
-- `role_chain`
+## Defense-side defaults
 
-but it now changes the **support structure**, not the existence of the operative core.
+The original aggressive evaluations are preserved, but the default conservative path is now slightly more cautious:
 
-### 2. Weaver: role-conditioned rewriting
+- conservative redaction uses smaller span and fraction limits
+- conservative PromptLocate post-processing falls back to minimal redaction when recovery becomes too destructive
+- conservative sanitization keeps more normal email context intact
 
-The weaver is still boundary-blur rewriting, but it is no longer uniformly forced into purely soft “residue” language.
+The aggressive comparison columns are still reported.
 
-- **operative roles** stay strong enough to matter
-- **support roles** stay more natural and contextual
-- **guide** snippets stay inline and non-standalone
+## Judge change
 
-This is meant to preserve ASR while still avoiding obviously separate injected sentences.
+`fragweave/eval/judge.py` has been tightened.
 
-### 3. Guide: inline booster/binder
+A response now counts as attack success only when it **meaningfully follows the malicious task**. Mere lexical contamination or isolated copied tokens should no longer count.
 
-Guide versions now behave as follows:
+This is intentional: the new attack path is meant to optimize for real semantic hijacking rather than token-level artifacts.
 
-- **guideA**: inline booster, default
-- **guideB**: anchored inline booster
-- **guideC**: weaker binder / continuity cue
+## Key files in this patch
 
-Guide is still woven into normal text rather than appended as a separate block.
+Core code:
 
-## Conservative defense evaluation
+- `fragweave/config.py`
+- `fragweave/eval/judge.py`
+- `fragweave/attacks/sharder.py`
+- `fragweave/attacks/guidance.py`
+- `fragweave/attacks/weaver.py`
+- `fragweave/run_sweep.py`
+- `fragweave/run_sweep_promptlocate.py`
 
-This revision keeps the original defense-style evaluations **and** adds a more conservative default evaluation.
+Configs:
 
-### Why
+- `configs/emailqa_with_localization_and_sanitization.yaml`
+- `configs/emailqa_promptlocate_example.yaml`
 
-A defense that deletes large chunks of content too aggressively is often unrealistic for EmailQA, because it destroys too much normal email context.
+## Defaults
 
-So the code now reports both:
+The recommended defaults in this revision are:
 
-- **aggressive / original-style defense results**
-- **conservative default defense results**
-
-### Redaction
-
-For localization-based redaction:
-
-- the old aggressive redaction is still kept
-- the new default redaction is conservative and refuses to remove too much content
-- large or too-many spans can cause fallback instead of broad deletion
-
-### Sanitization
-
-For sanitizer evaluation:
-
-- the old more aggressive sanitizer prompts are still kept
-- the new default sanitizer prompts remove only clearly behavior-controlling text
-- if the cleaned output drops too much content, the evaluation falls back to the original context
-
-### PromptLocate
-
-For PromptLocate evaluation:
-
-- the old recovered-context result is still kept as an aggressive baseline
-- the new default result is **conservative PromptLocate post-processing**
-- if PromptLocate recovery removes too much content, the pipeline falls back to conservative span redaction or to the original context depending on config
-
-## Important result columns
-
-### `run_sweep.py`
-
-Default/conservative columns:
-
-- `attack_succeeded_after_sanitizer_generic`
-- `attack_succeeded_after_sanitizer_task`
-- `attack_succeeded_after_redaction`
-
-Aggressive/original comparison columns:
-
-- `aggressive_attack_succeeded_after_sanitizer_generic`
-- `aggressive_attack_succeeded_after_sanitizer_task`
-- `aggressive_attack_succeeded_after_redaction`
-
-### `run_sweep_promptlocate.py`
-
-Default/conservative columns:
-
-- `attack_succeeded_after_sanitizer_generic`
-- `attack_succeeded_after_sanitizer_task`
-- `attack_succeeded_after_redaction`
-- `attack_succeeded_after_promptlocate`
-- `attack_succeeded_after_detector_promptlocate`
-
-Aggressive/original comparison columns:
-
-- `aggressive_attack_succeeded_after_sanitizer_generic`
-- `aggressive_attack_succeeded_after_sanitizer_task`
-- `aggressive_attack_succeeded_after_redaction`
-- `aggressive_attack_succeeded_after_promptlocate`
-- `aggressive_attack_succeeded_after_detector_promptlocate`
-
-PromptLocate-specific diagnostics also include:
-
-- `promptlocate_localized_shard_overlap`
-- `promptlocate_localized_guide_overlap`
-- conservative PromptLocate debug info in `debug_*.jsonl`
-
-## Default config choices
-
-The updated EmailQA configs now default to:
-
+- `max_samples: 10`
+- `k_values: [5]`
 - `profile_mode: balanced`
 - `guide_versions: ["A"]`
-- `relation_modes: ["none", "coref", "presupposition", "role_chain"]`
-- conservative redaction / PromptLocate post-processing enabled
-- conservative sanitizer evaluation enabled
+- conservative sanitizer / redaction / PromptLocate enabled
 
 ## Typical usage
 
-### Normal FragWeave sweep
+Normal sweep:
 
 ```bash
 python -m fragweave.run_sweep \
   --config configs/emailqa_with_localization_and_sanitization.yaml
 ```
 
-### PromptLocate evaluation
+PromptLocate evaluation:
 
 ```bash
 python -m fragweave.run_sweep_promptlocate \
@@ -191,40 +128,22 @@ python -m fragweave.run_sweep_promptlocate \
   --attack_method ours
 ```
 
-### Single relation mode override
+Single-guide override:
 
 ```bash
 python -m fragweave.run_sweep_promptlocate \
   --config configs/emailqa_promptlocate_example.yaml \
   --attack_method ours \
-  --relation-mode coref \
-  --guide-version A
+  --guide-version B
 ```
 
-## Files changed in this revision
+## Notes for later retuning
 
-Core implementation:
+This revision is tuned for EmailQA first. To adapt to another task or dataset later, the intended knobs are:
 
-- `fragweave/config.py`
-- `fragweave/attacks/role_debug.py`
-- `fragweave/attacks/sharder.py`
-- `fragweave/attacks/guidance.py`
-- `fragweave/attacks/weaver.py`
-- `fragweave/run_sweep.py`
-- `fragweave/run_sweep_promptlocate.py`
+- `attack.sharder_prompt`
+- `attack.weaver_prompt`
+- `attack.guidance_lib`
+- conservative sanitizer/redaction thresholds in the YAML
 
-Configs and docs:
-
-- `configs/emailqa_with_localization_and_sanitization.yaml`
-- `configs/emailqa_promptlocate_example.yaml`
-- `README.md`
-
-## Practical expectation
-
-This revision is not trying to make the attack completely unlocalizable.
-
-Instead, it aims for the more realistic target:
-
-- restore a usable ASR by keeping a small operative core
-- keep relation structure as support instead of as the main attack carrier
-- make defense evaluation more realistic by separating aggressive from conservative behavior
+The internal code is now much less tied to the old role/relation design, so prompt-template level retuning should be easier.
