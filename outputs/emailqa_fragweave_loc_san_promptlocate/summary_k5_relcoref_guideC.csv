@@ -1,0 +1,2 @@
+variant_id,attack_method,relation_mode,profile_mode,guide_version,n_rows,n_unique_samples,asr,loc_f1,asr_after_sanitizer_generic,asr_after_sanitizer_task,asr_after_redaction,promptlocate_loc_f1,promptlocate_localized_shard_overlap,promptlocate_localized_guide_overlap,asr_after_promptlocate,datasentinel_recall,asr_after_detector_promptlocate
+k5_relcoref_guideC,ours,coref,balanced,C,200,50,0.005,0.31004096059243097,0.0,0.005,0.0,0.38018981349549696,0.0,0.0,0.0,0.82,0.0

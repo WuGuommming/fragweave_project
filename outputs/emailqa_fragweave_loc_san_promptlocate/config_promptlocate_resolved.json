@@ -1,20 +1,40 @@
 {
-  "variant_id": "rewrite",
-  "task": "email_qa",
-  "attack_method": "rewrite",
-  "k": null,
-  "use_cross_refs": null,
-  "guide_version": null,
-  "combined_parts": [
-    "ignore",
-    "escape",
-    "fakecom"
+  "attack_method": "ours",
+  "variants": [
+    {
+      "variant_id": "k5_relnone_guideC",
+      "k": 5,
+      "relation_mode": "none",
+      "guide_version": "C",
+      "profile_mode": "balanced"
+    },
+    {
+      "variant_id": "k5_relcoref_guideC",
+      "k": 5,
+      "relation_mode": "coref",
+      "guide_version": "C",
+      "profile_mode": "balanced"
+    },
+    {
+      "variant_id": "k5_relpresupposition_guideC",
+      "k": 5,
+      "relation_mode": "presupposition",
+      "guide_version": "C",
+      "profile_mode": "balanced"
+    },
+    {
+      "variant_id": "k5_relrole_chain_guideC",
+      "k": 5,
+      "relation_mode": "role_chain",
+      "guide_version": "C",
+      "profile_mode": "balanced"
+    }
   ],
+  "combined_parts": null,
   "native_attack_limit": null,
-  "insertion_policy": "append",
-  "rewrite_context_max_chars": 1200,
-  "rewrite_model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
-  "topicattack": null,
+  "insertion_policy": null,
+  "rewrite_context_max_chars": null,
+  "rewrite_model_name_or_path": null,
   "opi_root": "third_party/Open-Prompt-Injection",
   "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json",
   "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel",
