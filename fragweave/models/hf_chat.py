@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Tuple, Dict, Any, List
+from typing import Optional, Tuple, Dict, Any
+from collections.abc import Mapping
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -52,7 +53,6 @@ class HFChat:
             model.eval()
             _MODEL_CACHE[key] = (tok, model)
 
-        # Wrapper can still have different decoding params per "role"
         return cls(
             name=cfg.name_or_path,
             tokenizer=tok,
@@ -62,15 +62,73 @@ class HFChat:
             top_p=cfg.top_p,
         )
 
+    def _get_input_device(self) -> torch.device:
+        try:
+            return next(self.model.parameters()).device
+        except StopIteration:
+            return getattr(self.model, "device", torch.device("cpu"))
+
+    def _extract_input_dict(self, enc: Any) -> Optional[Dict[str, torch.Tensor]]:
+        """Normalize tokenizer/chat-template outputs across transformers versions."""
+        if enc is None:
+            return None
+
+        if isinstance(enc, torch.Tensor):
+            return {
+                "input_ids": enc,
+                "attention_mask": torch.ones_like(enc),
+            }
+
+        if isinstance(enc, Mapping) or hasattr(enc, "keys"):
+            input_ids = enc.get("input_ids") if hasattr(enc, "get") else None
+            if input_ids is None and "input_ids" in enc:
+                input_ids = enc["input_ids"]
+            if input_ids is not None:
+                attention_mask = enc.get("attention_mask") if hasattr(enc, "get") else None
+                if attention_mask is None:
+                    attention_mask = torch.ones_like(input_ids)
+                return {
+                    "input_ids": input_ids,
+                    "attention_mask": attention_mask,
+                }
+
+        if isinstance(enc, (list, tuple)) and len(enc) > 0:
+            # Some older/newer paths may return token ids directly.
+            if isinstance(enc[0], int):
+                input_ids = torch.tensor([enc], dtype=torch.long)
+                return {
+                    "input_ids": input_ids,
+                    "attention_mask": torch.ones_like(input_ids),
+                }
+            if torch.is_tensor(enc[0]):
+                input_ids = enc[0]
+                return {
+                    "input_ids": input_ids,
+                    "attention_mask": torch.ones_like(input_ids),
+                }
+
+        if isinstance(enc, str):
+            toks = self.tokenizer(enc, return_tensors="pt")
+            input_ids = toks["input_ids"]
+            return {
+                "input_ids": input_ids,
+                "attention_mask": toks.get("attention_mask", torch.ones_like(input_ids)),
+            }
+
+        return None
+
     def generate(self, prompt: str, *, max_new_tokens: Optional[int] = None) -> str:
         max_new_tokens = max_new_tokens or self.max_new_tokens
 
         model_inputs = self.build_model_inputs(prompt=prompt, add_generation_prompt=True)
-        input_ids = model_inputs["input_ids"]
-        input_ids = input_ids.to(self.model.device)
+        input_device = self._get_input_device()
+        gen_inputs = {
+            "input_ids": model_inputs["input_ids"].to(input_device),
+            "attention_mask": model_inputs["attention_mask"].to(input_device),
+        }
         with torch.no_grad():
             out = self.model.generate(
-                input_ids,
+                **gen_inputs,
                 max_new_tokens=max_new_tokens,
                 do_sample=self.temperature > 0,
                 temperature=self.temperature if self.temperature > 0 else None,
@@ -78,7 +136,7 @@ class HFChat:
                 pad_token_id=self.tokenizer.pad_token_id,
                 eos_token_id=self.tokenizer.eos_token_id,
             )
-        gen = out[0][input_ids.shape[-1]:]
+        gen = out[0][gen_inputs["input_ids"].shape[-1]:]
         txt = self.tokenizer.decode(gen, skip_special_tokens=True)
         return txt.strip()
 
@@ -86,41 +144,46 @@ class HFChat:
         """Tokenize a prompt with chat-template compatibility fallbacks across transformers versions."""
         if hasattr(self.tokenizer, "apply_chat_template"):
             messages = [{"role": "user", "content": prompt}]
-            input_ids = None
-            attention_mask = None
 
-            try:
-                enc = self.tokenizer.apply_chat_template(
-                    messages,
-                    add_generation_prompt=add_generation_prompt,
-                    return_dict=True,
-                    return_tensors="pt",
+            # Preferred path for newer transformers versions that can return a dict/BatchEncoding.
+            for kwargs in (
+                {
+                    "add_generation_prompt": add_generation_prompt,
+                    "return_dict": True,
+                    "return_tensors": "pt",
+                },
+                {
+                    "add_generation_prompt": add_generation_prompt,
+                    "tokenize": True,
+                    "return_dict": True,
+                    "return_tensors": "pt",
+                },
+                {
+                    "add_generation_prompt": add_generation_prompt,
+                    "return_tensors": "pt",
+                },
+                {
+                    "add_generation_prompt": add_generation_prompt,
+                    "tokenize": False,
+                },
+            ):
+                try:
+                    enc = self.tokenizer.apply_chat_template(messages, **kwargs)
+                except TypeError:
+                    continue
+                parsed = self._extract_input_dict(enc)
+                if parsed is not None:
+                    input_ids = parsed["input_ids"]
+                    attention_mask = parsed["attention_mask"]
+                    break
+            else:
+                raise RuntimeError(
+                    "Unsupported output format from tokenizer.apply_chat_template: "
+                    f"{type(getattr(locals().get('enc', None), '__class__', object)).__name__}"
                 )
-                if isinstance(enc, dict):
-                    input_ids = enc.get("input_ids")
-                    attention_mask = enc.get("attention_mask")
-            except TypeError:
-                enc = None
-
-            if input_ids is None:
-                enc = self.tokenizer.apply_chat_template(
-                    messages,
-                    add_generation_prompt=add_generation_prompt,
-                    return_tensors="pt",
-                )
-                if isinstance(enc, torch.Tensor):
-                    input_ids = enc
-                elif isinstance(enc, dict) and "input_ids" in enc:
-                    input_ids = enc["input_ids"]
-                    attention_mask = enc.get("attention_mask")
-                else:
-                    raise RuntimeError("Unsupported output format from tokenizer.apply_chat_template")
-
-            if attention_mask is None:
-                attention_mask = torch.ones_like(input_ids)
         else:
             enc = self.tokenizer(prompt, return_tensors="pt")
-            input_ids = enc.input_ids
+            input_ids = enc["input_ids"]
             attention_mask = enc.get("attention_mask", torch.ones_like(input_ids))
 
         return {
@@ -139,9 +202,10 @@ class HFChat:
         output_attentions: bool = False,
         use_cache: bool = False,
     ) -> Any:
-        input_ids = input_ids.to(self.model.device)
+        input_device = self._get_input_device()
+        input_ids = input_ids.to(input_device)
         if attention_mask is not None:
-            attention_mask = attention_mask.to(self.model.device)
+            attention_mask = attention_mask.to(input_device)
         with torch.no_grad():
             return self.model(
                 input_ids=input_ids,
@@ -198,8 +262,8 @@ class HFChat:
         if target_ids.numel() == 0:
             raise ValueError("target_text tokenized to zero tokens; cannot score empty target.")
 
-        full_ids = torch.cat([prompt_ids, target_ids], dim=1).to(self.model.device)
-        full_mask = torch.cat([prompt_attention, torch.ones_like(target_ids)], dim=1).to(self.model.device)
+        full_ids = torch.cat([prompt_ids, target_ids], dim=1).to(self._get_input_device())
+        full_mask = torch.cat([prompt_attention, torch.ones_like(target_ids)], dim=1).to(self._get_input_device())
 
         with torch.no_grad():
             outputs = self.model(input_ids=full_ids, attention_mask=full_mask, return_dict=True)
@@ -231,9 +295,9 @@ class HFChat:
             raise ValueError(f"Unsupported attribution method: {method}")
 
         model_inputs = self.build_model_inputs(prompt=prompt, add_generation_prompt=add_generation_prompt)
-        prompt_ids = model_inputs["input_ids"].to(self.model.device)
-        prompt_mask = model_inputs["attention_mask"].to(self.model.device)
-        target_ids = self.tokenizer(target_text, add_special_tokens=False, return_tensors="pt").input_ids.to(self.model.device)
+        prompt_ids = model_inputs["input_ids"].to(self._get_input_device())
+        prompt_mask = model_inputs["attention_mask"].to(self._get_input_device())
+        target_ids = self.tokenizer(target_text, add_special_tokens=False, return_tensors="pt").input_ids.to(self._get_input_device())
         if target_ids.numel() == 0:
             raise ValueError("target_text tokenized to zero tokens; attribution requires non-empty target.")
 

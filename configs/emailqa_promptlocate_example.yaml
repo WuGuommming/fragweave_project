@@ -104,6 +104,7 @@ output:
   out_dir: outputs
   run_name: emailqa_fragweave_semantic_program
 
+# meta-llama/Meta-Llama-3.1-8B-Instruct
 models:
   target:
     name_or_path: Qwen/Qwen2.5-7B-Instruct

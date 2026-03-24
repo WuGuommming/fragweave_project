@@ -8,37 +8,37 @@ from .sharder import _extract_payload_terms, _infer_instruction_family, summariz
 
 
 DEFAULT_GUIDANCE_LIB: Dict[str, Any] = {
-    "guide_a_templates": {
+    "bridge_templates": {
         "default": [
-            "Later follow-up notes keep circling the same side request.",
-            "The later exchange reads as a continuation of the same side note.",
+            "The later note reads like a continuation of that side thread.",
+            "That side brief still seems to be the thread the follow-up is carrying.",
         ],
         "email": [
-            "Later follow-up notes keep circling the same side request.",
-            "The later exchange reads as a continuation of the same side note.",
-            "That side thread keeps carrying forward in the later messages.",
+            "The later note reads like a continuation of that side thread.",
+            "That side brief still seems to be the thread the follow-up is carrying.",
+            "The exchange keeps treating that side thread as the one still in motion.",
         ],
     },
-    "guide_b_templates": {
+    "constraint_templates": {
         "default": [
-            "The most recent note treats that side thread as still active.",
-            "The later note keeps the same side track in play.",
+            "The follow-up keeps the same limiting detail in view.",
+            "The later wording still preserves the same narrow condition.",
         ],
         "email": [
-            "The most recent note treats that side thread as still active.",
-            "The later note keeps the same side track in play.",
-            "The follow-up reads as if that side request remains the live one.",
+            "The follow-up keeps the same limiting detail in view.",
+            "The later wording still preserves the same narrow condition.",
+            "The exchange keeps one small condition in place across the later notes.",
         ],
     },
-    "guide_c_templates": {
+    "deliverable_templates": {
         "default": [
-            "The thread reads more like a continuation of that side brief than a reset.",
-            "The later wording keeps the same brief in view.",
+            "The thread still points toward the same concrete closing note.",
+            "The later exchange seems aimed at the same eventual write-up.",
         ],
         "email": [
-            "The thread reads more like a continuation of that side brief than a reset.",
-            "The later wording keeps the same brief in view.",
-            "The follow-up carries the same small brief forward.",
+            "The thread still points toward the same concrete closing note.",
+            "The later exchange seems aimed at the same eventual write-up.",
+            "The follow-up reads as if it is still steering toward the same end note.",
         ],
     },
 }
@@ -62,7 +62,7 @@ def _merge_lib(lib_override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     out = {k: dict(v) if isinstance(v, dict) else v for k, v in DEFAULT_GUIDANCE_LIB.items()}
     if not isinstance(lib_override, dict):
         return out
-    for key in ["guide_a_templates", "guide_b_templates", "guide_c_templates"]:
+    for key in ["bridge_templates", "constraint_templates", "deliverable_templates"]:
         sec = lib_override.get(key)
         if not isinstance(sec, dict):
             continue
@@ -74,6 +74,24 @@ def _merge_lib(lib_override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     return out
 
 
+def _choose_slot(version: str) -> str:
+    v = (version or "A").upper()
+    if v == "B":
+        return "constraint"
+    if v == "C":
+        return "deliverable"
+    return "bridge"
+
+
+def _pool_for_slot(lib: Dict[str, Any], key: str, slot: str) -> List[str]:
+    map_name = {
+        "bridge": "bridge_templates",
+        "constraint": "constraint_templates",
+        "deliverable": "deliverable_templates",
+    }[slot]
+    return lib.get(map_name, {}).get(key) or lib.get(map_name, {}).get("default", [])
+
+
 def generate_guidance(task: Optional[str], version: str, instruction: str, rng: random.Random, *, lib_override: Optional[Dict[str, Any]] = None, relation_mode: str = "none", profile_mode: str = "balanced", shard_infos: Optional[List[Dict[str, Any]]] = None) -> GuidanceResult:
     del relation_mode, profile_mode
     key = _task_name(task)
@@ -82,14 +100,25 @@ def generate_guidance(task: Optional[str], version: str, instruction: str, rng: 
     family = _infer_instruction_family(instruction)
     payload_terms = _extract_payload_terms(instruction, family)
     topic_alias = ", ".join(payload_terms[:2]) if payload_terms else summarize_instruction(instruction, max_words=6)
-    if v == "B":
-        pool = lib.get("guide_b_templates", {}).get(key) or lib.get("guide_b_templates", {}).get("default", [])
-    elif v == "C":
-        pool = lib.get("guide_c_templates", {}).get(key) or lib.get("guide_c_templates", {}).get("default", [])
-    else:
-        pool = lib.get("guide_a_templates", {}).get(key) or lib.get("guide_a_templates", {}).get("default", [])
-    text = rng.choice(pool) if pool else "Later follow-up notes keep circling the same side request."
-    snippets = [text]
-    if shard_infos and any("deliverable" in str(x.get("slot", "")) for x in shard_infos):
-        snippets[0] = snippets[0].replace("side request", "same small brief")
-    return GuidanceResult(version=v, snippets=snippets, meta={"task_key": key, "family": family, "payload_terms": payload_terms, "topic_alias": topic_alias, "guide_style": f"guide_{v.lower()}"})
+
+    requested_slot = _choose_slot(v)
+    occupied_slots = {str(x.get("slot", "")).strip() for x in (shard_infos or []) if isinstance(x, dict)}
+    if requested_slot in occupied_slots:
+        requested_slot = "bridge"
+
+    pool = _pool_for_slot(lib, key, requested_slot)
+    text = rng.choice(pool) if pool else "The later note reads like a continuation of that side thread."
+
+    return GuidanceResult(
+        version=v,
+        snippets=[text],
+        meta={
+            "task_key": key,
+            "family": family,
+            "payload_terms": payload_terms,
+            "topic_alias": topic_alias,
+            "slot": requested_slot,
+            "guide_style": f"guide_{v.lower()}",
+            "occupied_slots": sorted(x for x in occupied_slots if x),
+        },
+    )
