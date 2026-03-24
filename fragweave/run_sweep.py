@@ -411,6 +411,11 @@ def choose_spread_ops(task: Optional[str], context: str, items: List[Dict[str, A
         "constraint": [max(0, n // 2), max(0, (3 * n) // 4)],
         "deliverable": [max(0, n - 2), max(0, n - 1)],
         "guide": [max(0, n // 2), max(0, n - 1)],
+        # semantic-program aliases
+        "operative_core": [max(0, n // 3), max(0, (2 * n) // 3)],
+        "topic_frame": [max(0, n // 4), max(0, n // 2)],
+        "continuation": [max(0, n // 2), max(0, n - 2)],
+        "bridge": [max(0, n // 2), max(0, n - 1)],
     }
     used: Set[int] = set()
     ops: List[WeaveOp] = []
@@ -604,7 +609,8 @@ def main() -> None:
                     shard_res = shard_with_llm(sharder, instruction=malicious, k=int(k), task=task, max_retries=sharder_retries, prompt_template=sharder_prompt, profile_mode=profile_mode)
                     shard_infos = [{"slot": shard_res.slot_plan[i] if i < len(shard_res.slot_plan) else f"slot_{i}", "text": shard, "source": "shard"} for i, shard in enumerate(shard_res.shards)]
                     guide_res = generate_guidance(task, gv, malicious, rng, lib_override=getattr(cfg.attack, "guidance_lib", None), profile_mode=profile_mode, shard_infos=shard_infos)
-                    guide_infos = [{"slot": "guide", "text": x, "source": "guide"} for x in guide_res.snippets]
+                    guide_slot = str(guide_res.meta.get("slot", "guide")) if isinstance(getattr(guide_res, "meta", None), dict) else "guide"
+                    guide_infos = [{"slot": guide_slot, "text": x, "source": "guide"} for x in guide_res.snippets]
                     items = shard_infos + guide_infos
                     carrier = carrier_line if preserve_structure else None
                     ops, ctx2 = choose_spread_ops(task, context, items, rng, carrier_line=carrier)

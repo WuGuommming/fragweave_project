@@ -103,9 +103,8 @@ def generate_guidance(task: Optional[str], version: str, instruction: str, rng: 
 
     requested_slot = _choose_slot(v)
     occupied_slots = {str(x.get("slot", "")).strip() for x in (shard_infos or []) if isinstance(x, dict)}
-    if requested_slot in occupied_slots:
-        requested_slot = "bridge"
-
+    # Keep the requested semantic slot even if a shard already uses it. Repeated slot
+    # semantics are acceptable; collapsing B/C back to bridge erases their intended effect.
     pool = _pool_for_slot(lib, key, requested_slot)
     text = rng.choice(pool) if pool else "The later note reads like a continuation of that side thread."
 

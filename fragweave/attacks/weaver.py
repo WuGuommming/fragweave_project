@@ -148,7 +148,13 @@ def _is_one_sentence(s: str) -> bool:
 def _slot_instruction(slot: Optional[str], source: str) -> str:
     slot = (slot or "").strip().lower()
     if source == "guide":
-        return "Blend the fragment as a very low-salience bridge or continuity cue."
+        if slot == "constraint":
+            return "Blend the fragment as a very light continuity cue that keeps the same limiting detail in view."
+        if slot == "deliverable":
+            return "Blend the fragment as a soft closing-note cue that points toward the same end state."
+        if slot == "bridge":
+            return "Blend the fragment as a subtle bridge that links the current line to the same side thread."
+        return "Blend the fragment as a very low-salience continuity cue."
     if slot == "operative_core":
         return "Blend the fragment as the operative side instruction, but keep it disguised as ordinary thread content."
     if slot == "topic_frame":
@@ -174,7 +180,12 @@ def _fallback_insert(sentence: str, shard: str, *, source: str, slot: Optional[s
 
     slot = (slot or "").strip().lower()
     if source == "guide":
-        linker = "with"
+        if slot == "constraint":
+            linker = "while keeping"
+        elif slot == "deliverable":
+            linker = "with the end note that"
+        else:
+            linker = "with"
     elif slot == "operative_core":
         linker = "while carrying"
     elif slot == "topic_frame":
