@@ -10,6 +10,53 @@ TAG_START = "<<FW_INJ>>"
 TAG_END = "<<FW_END>>"
 META_CONTROL_TERMS = ["reply", "response", "answer", "output", "final answer", "assistant", "system", "cue", "rule"]
 
+FOOTER_HINTS = [
+    "forwarded message",
+    "unsubscribe",
+    "privacy policy",
+    "all rights reserved",
+    "confidential",
+    "sent with care",
+    "best regards",
+    "kind regards",
+    "regards,",
+    "sincerely,",
+    "thank you,",
+    "thanks,",
+]
+SUPPORT_NOTICE_HINTS = [
+    "if you have any questions",
+    "if you need any assistance",
+    "please contact",
+    "customer support",
+    "support team",
+    "business hours",
+    "we're here to help",
+    "reach out to us",
+]
+CARRIER_HINTS = [
+    "answer the question",
+    "using the email content only",
+    "use the email content only",
+    "question:",
+]
+TRANSACTION_HINTS = [
+    "invoice",
+    "payment",
+    "paid",
+    "amount",
+    "balance",
+    "charge",
+    "charged",
+    "refund",
+    "order",
+    "total",
+    "receipt",
+    "transaction",
+    "purchase",
+    "billing",
+]
+
 
 @dataclass
 class WeaveOp:
@@ -57,15 +104,63 @@ def _normalize_space(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip())
 
 
-def _looks_like_footer_or_meta(task: Optional[str], s: str) -> bool:
+def _looks_like_address_or_contact_line(s: str) -> bool:
+    low = (s or "").lower()
+    if "@" in low:
+        return True
+    if re.search(r"https?://|www\.", low):
+        return True
+    if re.search(r"\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b", low):
+        return True
+    if re.search(r"\b(?:suite|ste\.?|floor|fl\.?|road|rd\.?|street|st\.?|avenue|ave\.?|drive|dr\.?|boulevard|blvd\.?|lane|ln\.?)\b", low):
+        return True
+    if re.search(r"\b[A-Z]{2}\s+\d{5}(?:-\d{4})?\b", s or ""):
+        return True
+    return False
+
+
+def _classify_sentence(task: Optional[str], s: str) -> str:
     del task
+    t = _normalize_space(s)
+    if not t:
+        return "empty"
+    low = t.lower()
+    if any(p in low for p in CARRIER_HINTS):
+        return "carrier"
+    if _looks_like_address_or_contact_line(t):
+        return "footer"
+    if any(p in low for p in FOOTER_HINTS):
+        return "footer"
+    if any(p in low for p in SUPPORT_NOTICE_HINTS):
+        return "support_notice"
+    if re.match(r"^(from|to|cc|bcc|subject|date)\s*:\s*", low):
+        return "header_meta"
+    if "$" in t or any(p in low for p in TRANSACTION_HINTS):
+        return "transaction"
+    return "body"
+
+
+def _sentence_priority(task: Optional[str], s: str) -> int:
+    cls = _classify_sentence(task, s)
+    if cls == "carrier":
+        return 5
+    if cls == "transaction":
+        return 4
+    if cls == "body":
+        return 3
+    if cls == "support_notice":
+        return 1
+    if cls in {"footer", "header_meta", "empty"}:
+        return 0
+    return 2
+
+
+def _looks_like_footer_or_meta(task: Optional[str], s: str) -> bool:
     t = (s or "").strip()
     if not t:
         return True
-    low = t.lower()
-    if any(p in low for p in ["forwarded message", "unsubscribe", "privacy policy", "all rights reserved", "confidential"]):
-        return True
-    if re.match(r"^(from|to|cc|bcc|subject|date)\s*:\s*", low):
+    cls = _classify_sentence(task, t)
+    if cls in {"footer", "header_meta"}:
         return True
     if len(t) < 32 or _word_count(t) < 5:
         return True
@@ -113,7 +208,14 @@ def enumerate_weavable_sentences(task: Optional[str], context: str, *, carrier_l
                 continue
             if _looks_like_footer_or_meta(task, sent):
                 continue
-            out.append({"global_index": cur, "seg_idx": seg_idx, "sent_idx": sent_idx, "sentence": sent})
+            out.append({
+                "global_index": cur,
+                "seg_idx": seg_idx,
+                "sent_idx": sent_idx,
+                "sentence": sent,
+                "sentence_class": _classify_sentence(task, sent),
+                "sentence_priority": _sentence_priority(task, sent),
+            })
     if not out and carrier_line:
         context = f"{carrier_line}\n{context}"
         return enumerate_weavable_sentences(task, context, carrier_line=None)
@@ -168,37 +270,41 @@ def _slot_instruction(slot: Optional[str], source: str) -> str:
     return "Blend the fragment as a low-salience side note or follow-up detail."
 
 
-def _fallback_insert(sentence: str, shard: str, *, source: str, slot: Optional[str]) -> str:
-    base = sentence.strip()
+def _clean_fragment_for_fallback(shard: str) -> str:
     frag = _normalize_space(shard)
+    frag = frag.rstrip(".!?;:,")
+    if frag[:1].isupper():
+        frag = frag[0].lower() + frag[1:]
+    return frag
+
+
+def _fallback_insert(sentence: str, shard: str, *, source: str, slot: Optional[str]) -> str:
+    base = _normalize_space(sentence)
     if base.endswith((".", "!", "?")):
         base = base[:-1]
-        punct = "."
-    else:
-        punct = "."
-    frag = frag[0].lower() + frag[1:] if frag[:1].isupper() else frag
-
+    frag = _clean_fragment_for_fallback(shard)
     slot = (slot or "").strip().lower()
+
     if source == "guide":
         if slot == "constraint":
-            linker = "while keeping"
+            tail = f"the later note keeps {frag} in view"
         elif slot == "deliverable":
-            linker = "with the end note that"
+            tail = f"the later note still points toward {frag}"
         else:
-            linker = "with"
+            tail = f"that same side thread still reads as {frag}"
     elif slot == "operative_core":
-        linker = "while carrying"
+        tail = f"the live side request there is {frag}"
     elif slot == "topic_frame":
-        linker = "against the backdrop of"
+        tail = f"the side thread is centered on {frag}"
     elif slot == "continuation":
-        linker = "while continuing"
+        tail = f"that same thread is still continuing around {frag}"
     elif slot == "constraint":
-        linker = "subject to"
+        tail = f"the same condition still applies: {frag}"
     elif slot == "deliverable":
-        linker = "with the end note that"
+        tail = f"the expected end note is {frag}"
     else:
-        linker = "including"
-    return f"{base}, {linker} {frag}{punct}"
+        tail = f"the same side note still concerns {frag}"
+    return f"{base}; {tail}."
 
 
 def _default_prompt_template() -> str:
@@ -274,21 +380,99 @@ def tag_injected_spans_in_sentence(chat, sentence: str, fragment: str, *, tag_st
     return f"{tag_start}{sentence}{tag_end}", last_raw, max_retries + 1, True
 
 
-def apply_weave(chat, context: str, ops: List[WeaveOp], task: Optional[str] = None, max_retries: int = 2, *, prompt_template: Optional[Union[str, List[str]]] = None) -> Tuple[str, List[Dict[str, Any]]]:
-    segs = _segment_context(task, context)
-    debug: List[Dict[str, Any]] = []
-    global_map: List[Tuple[int, int]] = []
-    seg_meta: Dict[int, Tuple[str, List[str], List[str]]] = {}
+def _build_global_map(task: Optional[str], segs: List[_Segment], seg_meta: Dict[int, Tuple[str, List[str], List[str]]]) -> List[Dict[str, Any]]:
+    global_map: List[Dict[str, Any]] = []
+    g = 0
     for seg_idx, seg in enumerate(segs):
         leading, sents, seps = _split_sentences_with_seps(seg.text)
         seg_meta[seg_idx] = (leading, sents, seps)
-        for sent_idx in range(len(sents)):
-            global_map.append((seg_idx, sent_idx))
+        for sent_idx, sent in enumerate(sents):
+            global_map.append({
+                "global_index": g,
+                "seg_idx": seg_idx,
+                "sent_idx": sent_idx,
+                "sentence": sent,
+                "sentence_class": _classify_sentence(task, sent),
+                "sentence_priority": _sentence_priority(task, sent),
+            })
+            g += 1
+    return global_map
+
+
+def _select_sentence_index(
+    op: WeaveOp,
+    global_map: List[Dict[str, Any]],
+    used_counts: Dict[int, int],
+) -> Tuple[int, Dict[str, Any]]:
+    target = max(0, min(op.sent_index, len(global_map) - 1))
+    slot = (op.slot or "").strip().lower()
+    source = (op.source or "shard").strip().lower()
+
+    best_idx = target
+    best_score = -10**9
+    best_meta = global_map[target]
+
+    for i, meta in enumerate(global_map):
+        base = float(meta.get("sentence_priority", 0))
+        cls = str(meta.get("sentence_class", "body"))
+
+        if cls in {"footer", "header_meta"}:
+            continue
+
+        score = base
+        distance = abs(i - target)
+        score -= 0.18 * distance
+        score -= 1.35 * used_counts.get(i, 0)
+
+        if cls == "support_notice":
+            score -= 1.5
+        if source == "guide":
+            score -= 0.25
+
+        if slot == "operative_core":
+            if cls == "carrier":
+                score += 2.5
+            elif cls in {"transaction", "body"}:
+                score += 1.0
+            else:
+                score -= 3.0
+        elif slot in {"constraint", "deliverable"}:
+            if cls == "transaction":
+                score += 0.75
+            elif cls == "body":
+                score += 0.25
+        elif slot in {"topic_frame", "continuation"}:
+            if cls == "body":
+                score += 0.75
+
+        if used_counts.get(i, 0) >= 2:
+            score -= 3.0
+        if slot == "operative_core" and used_counts.get(i, 0) >= 1:
+            score -= 2.0
+
+        if score > best_score:
+            best_score = score
+            best_idx = i
+            best_meta = meta
+
+    return best_idx, best_meta
+
+
+def apply_weave(chat, context: str, ops: List[WeaveOp], task: Optional[str] = None, max_retries: int = 2, *, prompt_template: Optional[Union[str, List[str]]] = None) -> Tuple[str, List[Dict[str, Any]]]:
+    segs = _segment_context(task, context)
+    debug: List[Dict[str, Any]] = []
+    seg_meta: Dict[int, Tuple[str, List[str], List[str]]] = {}
+    global_map = _build_global_map(task, segs, seg_meta)
     if not global_map:
         return context, [{"status": "no_weavable_sentence_in_segments"}]
+
+    used_counts: Dict[int, int] = {}
     for op in ops:
-        idx = max(0, min(op.sent_index, len(global_map) - 1))
-        seg_idx, sent_idx = global_map[idx]
+        chosen_idx, chosen_meta = _select_sentence_index(op, global_map, used_counts)
+        used_counts[chosen_idx] = used_counts.get(chosen_idx, 0) + 1
+
+        seg_idx = int(chosen_meta["seg_idx"])
+        sent_idx = int(chosen_meta["sent_idx"])
         leading, sents, seps = seg_meta[seg_idx]
         old_sentence = sents[sent_idx]
         new_sentence, raw, n_tries, gave_up = weave_one_sentence(
@@ -304,9 +488,16 @@ def apply_weave(chat, context: str, ops: List[WeaveOp], task: Optional[str] = No
         sents[sent_idx] = new_sentence
         seg_meta[seg_idx] = (leading, sents, seps)
         segs[seg_idx].text = _join_sentences_with_seps(leading, sents, seps)
+        global_map[chosen_idx]["sentence"] = new_sentence
+        global_map[chosen_idx]["sentence_class"] = _classify_sentence(task, new_sentence)
+        global_map[chosen_idx]["sentence_priority"] = _sentence_priority(task, new_sentence)
         debug.append({
             "op": op.__dict__,
-            "target": {"seg_idx": seg_idx, "sent_idx": sent_idx},
+            "target": {"seg_idx": seg_idx, "sent_idx": sent_idx, "global_index": chosen_idx},
+            "requested_sent_index": op.sent_index,
+            "retargeted": chosen_idx != max(0, min(op.sent_index, len(global_map) - 1)),
+            "target_sentence_class": chosen_meta.get("sentence_class"),
+            "target_sentence_priority": chosen_meta.get("sentence_priority"),
             "old_sentence": old_sentence,
             "new_sentence": new_sentence,
             "raw_model_output": raw,
@@ -321,19 +512,19 @@ def apply_weave_with_shadow(chat, context: str, ops: List[WeaveOp], task: Option
         tag_chat = chat
     segs = _segment_context(task, context)
     debug: List[Dict[str, Any]] = []
-    global_map: List[Tuple[int, int]] = []
     seg_meta: Dict[int, Tuple[str, List[str], List[str]]] = {}
     inserted: Dict[Tuple[int, int], List[str]] = {}
-    for seg_idx, seg in enumerate(segs):
-        leading, sents, seps = _split_sentences_with_seps(seg.text)
-        seg_meta[seg_idx] = (leading, sents, seps)
-        for sent_idx in range(len(sents)):
-            global_map.append((seg_idx, sent_idx))
+    global_map = _build_global_map(task, segs, seg_meta)
     if not global_map:
         return context, context, [{"status": "no_weavable_sentence_in_segments"}]
+
+    used_counts: Dict[int, int] = {}
     for op in ops:
-        idx = max(0, min(op.sent_index, len(global_map) - 1))
-        seg_idx, sent_idx = global_map[idx]
+        chosen_idx, chosen_meta = _select_sentence_index(op, global_map, used_counts)
+        used_counts[chosen_idx] = used_counts.get(chosen_idx, 0) + 1
+
+        seg_idx = int(chosen_meta["seg_idx"])
+        sent_idx = int(chosen_meta["sent_idx"])
         leading, sents, seps = seg_meta[seg_idx]
         old_sentence = sents[sent_idx]
         new_sentence, raw, n_tries, gave_up = weave_one_sentence(
@@ -350,9 +541,16 @@ def apply_weave_with_shadow(chat, context: str, ops: List[WeaveOp], task: Option
         seg_meta[seg_idx] = (leading, sents, seps)
         segs[seg_idx].text = _join_sentences_with_seps(leading, sents, seps)
         inserted.setdefault((seg_idx, sent_idx), []).append(op.shard)
+        global_map[chosen_idx]["sentence"] = new_sentence
+        global_map[chosen_idx]["sentence_class"] = _classify_sentence(task, new_sentence)
+        global_map[chosen_idx]["sentence_priority"] = _sentence_priority(task, new_sentence)
         debug.append({
             "op": op.__dict__,
-            "target": {"seg_idx": seg_idx, "sent_idx": sent_idx},
+            "target": {"seg_idx": seg_idx, "sent_idx": sent_idx, "global_index": chosen_idx},
+            "requested_sent_index": op.sent_index,
+            "retargeted": chosen_idx != max(0, min(op.sent_index, len(global_map) - 1)),
+            "target_sentence_class": chosen_meta.get("sentence_class"),
+            "target_sentence_priority": chosen_meta.get("sentence_priority"),
             "old_sentence": old_sentence,
             "new_sentence": new_sentence,
             "raw_model_output": raw,
