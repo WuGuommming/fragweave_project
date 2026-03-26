@@ -681,7 +681,7 @@ def main() -> None:
     ap.add_argument("--k", type=int, default=4)
     ap.add_argument("--guide-version", type=str, default=None)
     ap.add_argument("--variant-id", type=str, default=None)
-    ap.add_argument("--max-samples", type=int, default=20)
+    ap.add_argument("--max-samples", type=int, default=50)
     ap.add_argument("--combined_parts", type=str, default="ignore,escape,fakecom")
     ap.add_argument("--native_attack_limit", type=int, default=None)
     ap.add_argument("--insertion_policy", type=str, default="append")

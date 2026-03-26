@@ -1,0 +1,47 @@
+[Config] {"attack_method": "ours", "variants": [{"variant_id": "k4_guideA_balanced", "k": 4, "guide_version": "A", "profile_mode": "balanced"}], "combined_parts": null, "native_attack_limit": null, "insertion_policy": null, "rewrite_context_max_chars": null, "rewrite_model_name_or_path": null, "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0, "promptlocate_conservative_enable": true, "target_debug_probes": true, "target_debug_skip_fragment_probe": false}
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<01:31,  3.71it/s]Loading weights:   5%|▍         | 16/339 [00:00<00:05, 53.99it/s]Loading weights:   8%|▊         | 28/339 [00:00<00:04, 67.19it/s]Loading weights:  12%|█▏        | 40/339 [00:00<00:03, 74.90it/s]Loading weights:  15%|█▌        | 52/339 [00:00<00:03, 79.53it/s]Loading weights:  18%|█▊        | 61/339 [00:00<00:03, 78.64it/s]Loading weights:  21%|██        | 70/339 [00:01<00:03, 70.31it/s]Loading weights:  23%|██▎       | 78/339 [00:01<00:04, 56.36it/s]Loading weights:  26%|██▋       | 89/339 [00:01<00:03, 62.57it/s]Loading weights:  29%|██▉       | 100/339 [00:01<00:03, 67.32it/s]Loading weights:  32%|███▏      | 108/339 [00:01<00:03, 65.78it/s]Loading weights:  34%|███▍      | 115/339 [00:01<00:04, 54.27it/s]Loading weights:  37%|███▋      | 125/339 [00:01<00:03, 63.28it/s]Loading weights:  40%|███▉      | 135/339 [00:02<00:02, 71.42it/s]Loading weights:  42%|████▏     | 143/339 [00:02<00:02, 66.21it/s]Loading weights:  45%|████▍     | 151/339 [00:02<00:03, 56.85it/s]Loading weights:  47%|████▋     | 161/339 [00:02<00:02, 61.67it/s]Loading weights:  50%|████▉     | 168/339 [00:02<00:02, 62.41it/s]Loading weights:  52%|█████▏    | 175/339 [00:02<00:03, 50.95it/s]Loading weights:  54%|█████▍    | 184/339 [00:03<00:03, 50.29it/s]Loading weights:  56%|█████▋    | 191/339 [00:03<00:02, 53.94it/s]Loading weights:  58%|█████▊    | 197/339 [00:03<00:02, 48.47it/s]Loading weights:  60%|██████    | 204/339 [00:03<00:02, 52.36it/s]Loading weights:  62%|██████▏   | 210/339 [00:03<00:03, 41.26it/s]Loading weights:  65%|██████▌   | 221/339 [00:03<00:02, 51.38it/s]Loading weights:  68%|██████▊   | 232/339 [00:03<00:01, 57.36it/s]Loading weights:  71%|███████   | 239/339 [00:04<00:01, 56.29it/s]Loading weights:  72%|███████▏  | 245/339 [00:04<00:01, 52.80it/s]Loading weights:  76%|███████▌  | 256/339 [00:04<00:01, 60.42it/s]Loading weights:  78%|███████▊  | 263/339 [00:04<00:01, 59.46it/s]Loading weights:  80%|███████▉  | 270/339 [00:04<00:01, 49.77it/s]Loading weights:  83%|████████▎ | 281/339 [00:04<00:01, 57.69it/s]Loading weights:  86%|████████▌ | 292/339 [00:04<00:00, 63.34it/s]Loading weights:  88%|████████▊ | 299/339 [00:05<00:00, 51.34it/s]Loading weights:  90%|████████▉ | 305/339 [00:05<00:00, 51.84it/s]Loading weights:  93%|█████████▎| 316/339 [00:05<00:00, 62.11it/s]Loading weights:  95%|█████████▌| 323/339 [00:05<00:00, 55.19it/s]Loading weights:  97%|█████████▋| 329/339 [00:05<00:00, 48.11it/s]Loading weights:  99%|█████████▉| 336/339 [00:05<00:00, 52.25it/s]Loading weights: 100%|██████████| 339/339 [00:05<00:00, 57.69it/s]
+
+== Variant k4_guideA_balanced ==
+k4_guideA_balanced:   0%|          | 0/50 [00:00<?, ?it/s]The following generation flags are not valid and may be ignored: ['top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+`torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s][A
+Loading weights:  46%|████▌     | 134/291 [00:00<00:00, 1329.90it/s][ALoading weights: 100%|██████████| 291/291 [00:00<00:00, 1990.81it/s]
+
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 291/291 [00:00<00:00, 8374.45it/s]
+The following generation flags are not valid and may be ignored: ['output_attentions']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 148/148 [00:00<00:00, 9797.46it/s]
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+k4_guideA_balanced:   2%|▏         | 1/50 [01:27<1:11:22, 87.39s/it]k4_guideA_balanced:   4%|▍         | 2/50 [02:58<1:11:37, 89.52s/it]k4_guideA_balanced:   6%|▌         | 3/50 [04:02<1:01:04, 77.96s/it]k4_guideA_balanced:   8%|▊         | 4/50 [05:21<59:58, 78.22s/it]  k4_guideA_balanced:  10%|█         | 5/50 [06:30<56:09, 74.87s/it]k4_guideA_balanced:  12%|█▏        | 6/50 [07:40<53:46, 73.33s/it]k4_guideA_balanced:  14%|█▍        | 7/50 [08:51<51:54, 72.43s/it]k4_guideA_balanced:  16%|█▌        | 8/50 [09:52<48:14, 68.91s/it]k4_guideA_balanced:  18%|█▊        | 9/50 [11:11<49:10, 71.95s/it]k4_guideA_balanced:  20%|██        | 10/50 [12:40<51:31, 77.28s/it]k4_guideA_balanced:  22%|██▏       | 11/50 [14:07<52:07, 80.19s/it]k4_guideA_balanced:  24%|██▍       | 12/50 [15:11<47:46, 75.43s/it]k4_guideA_balanced:  26%|██▌       | 13/50 [16:45<49:57, 81.01s/it]k4_guideA_balanced:  28%|██▊       | 14/50 [17:49<45:32, 75.90s/it]k4_guideA_balanced:  30%|███       | 15/50 [18:54<42:20, 72.60s/it]k4_guideA_balanced:  32%|███▏      | 16/50 [20:09<41:30, 73.26s/it]k4_guideA_balanced:  34%|███▍      | 17/50 [21:33<42:01, 76.41s/it]k4_guideA_balanced:  36%|███▌      | 18/50 [23:14<44:47, 84.00s/it]k4_guideA_balanced:  38%|███▊      | 19/50 [24:34<42:48, 82.85s/it]k4_guideA_balanced:  40%|████      | 20/50 [25:31<37:32, 75.09s/it]k4_guideA_balanced:  42%|████▏     | 21/50 [26:48<36:28, 75.45s/it]k4_guideA_balanced:  44%|████▍     | 22/50 [28:12<36:28, 78.15s/it]k4_guideA_balanced:  46%|████▌     | 23/50 [29:40<36:30, 81.13s/it]k4_guideA_balanced:  48%|████▊     | 24/50 [30:55<34:21, 79.29s/it]k4_guideA_balanced:  50%|█████     | 25/50 [32:06<32:00, 76.84s/it]k4_guideA_balanced:  52%|█████▏    | 26/50 [33:24<30:52, 77.19s/it]k4_guideA_balanced:  54%|█████▍    | 27/50 [34:19<27:02, 70.54s/it]k4_guideA_balanced:  56%|█████▌    | 28/50 [35:21<24:51, 67.81s/it]k4_guideA_balanced:  58%|█████▊    | 29/50 [36:34<24:18, 69.44s/it]k4_guideA_balanced:  60%|██████    | 30/50 [37:41<22:53, 68.68s/it]k4_guideA_balanced:  62%|██████▏   | 31/50 [38:43<21:08, 66.79s/it]k4_guideA_balanced:  64%|██████▍   | 32/50 [40:05<21:21, 71.20s/it]k4_guideA_balanced:  66%|██████▌   | 33/50 [42:25<26:00, 91.82s/it]k4_guideA_balanced:  68%|██████▊   | 34/50 [43:39<23:06, 86.64s/it]k4_guideA_balanced:  70%|███████   | 35/50 [44:32<19:08, 76.58s/it]k4_guideA_balanced:  72%|███████▏  | 36/50 [45:36<16:57, 72.71s/it]k4_guideA_balanced:  74%|███████▍  | 37/50 [46:52<15:56, 73.59s/it]k4_guideA_balanced:  76%|███████▌  | 38/50 [48:07<14:48, 74.02s/it]k4_guideA_balanced:  78%|███████▊  | 39/50 [48:53<12:04, 65.83s/it]k4_guideA_balanced:  80%|████████  | 40/50 [49:58<10:55, 65.54s/it]k4_guideA_balanced:  82%|████████▏ | 41/50 [51:09<10:04, 67.17s/it]k4_guideA_balanced:  84%|████████▍ | 42/50 [52:13<08:50, 66.25s/it]k4_guideA_balanced:  86%|████████▌ | 43/50 [53:24<07:53, 67.60s/it]k4_guideA_balanced:  88%|████████▊ | 44/50 [54:31<06:43, 67.25s/it]k4_guideA_balanced:  90%|█████████ | 45/50 [55:33<05:28, 65.79s/it]k4_guideA_balanced:  92%|█████████▏| 46/50 [56:36<04:20, 65.08s/it]k4_guideA_balanced:  94%|█████████▍| 47/50 [57:41<03:14, 64.85s/it]k4_guideA_balanced:  96%|█████████▌| 48/50 [58:27<01:58, 59.31s/it]k4_guideA_balanced:  98%|█████████▊| 49/50 [59:40<01:03, 63.26s/it]k4_guideA_balanced: 100%|██████████| 50/50 [1:00:32<00:00, 60.05s/it]k4_guideA_balanced: 100%|██████████| 50/50 [1:00:32<00:00, 72.65s/it]
+[Saved] rows=outputs/emailqa_fragweave_semantic_program_promptlocate/results_k4_guideA_balanced_5.csv
+[Saved] summary=outputs/emailqa_fragweave_semantic_program_promptlocate/summary_k4_guideA_balanced_5.csv
+[Saved] debug=outputs/emailqa_fragweave_semantic_program_promptlocate/debug_k4_guideA_balanced_5.jsonl
+[Summary]
+{
+  "variant_id": "k4_guideA_balanced",
+  "attack_method": "ours",
+  "profile_mode": "balanced",
+  "guide_version": "A",
+  "n_rows": 50,
+  "n_unique_samples": 50,
+  "asr": 0.3,
+  "loc_f1": 0.22361700034727267,
+  "asr_after_sanitizer_generic": 0.3,
+  "asr_after_sanitizer_task": 0.3,
+  "asr_after_redaction": 0.3,
+  "aggressive_asr_after_sanitizer_generic": 0.26,
+  "aggressive_asr_after_sanitizer_task": 0.26,
+  "aggressive_asr_after_redaction": 0.28,
+  "promptlocate_loc_f1": 0.3104952275253618,
+  "promptlocate_localized_shard_overlap": 0.0,
+  "promptlocate_localized_guide_overlap": 0.0,
+  "asr_after_promptlocate": 0.36,
+  "aggressive_asr_after_promptlocate": 0.24,
+  "promptlocate_error_rate": 0.02,
+  "datasentinel_recall": 0.8,
+  "detector_promptlocate_error_rate": 0.02,
+  "asr_after_detector_promptlocate": 0.36,
+  "aggressive_asr_after_detector_promptlocate": 0.26
+}
+

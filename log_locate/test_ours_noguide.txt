@@ -1,0 +1,207 @@
+[Config] {"attack_method": "ours", "variants": [{"variant_id": "k4_guideN_balanced", "k": 4, "guide_version": "N", "profile_mode": "balanced"}, {"variant_id": "k4_guideO_balanced", "k": 4, "guide_version": "o", "profile_mode": "balanced"}, {"variant_id": "k4_guideN_balanced", "k": 4, "guide_version": "n", "profile_mode": "balanced"}, {"variant_id": "k4_guideE_balanced", "k": 4, "guide_version": "e", "profile_mode": "balanced"}], "combined_parts": null, "native_attack_limit": null, "insertion_policy": null, "rewrite_context_max_chars": null, "rewrite_model_name_or_path": null, "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0, "promptlocate_conservative_enable": true, "target_debug_probes": true, "target_debug_skip_fragment_probe": false}
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<00:53,  6.34it/s]Loading weights:   4%|▍         | 14/339 [00:00<00:06, 48.96it/s]Loading weights:   9%|▊         | 29/339 [00:00<00:04, 76.47it/s]Loading weights:  12%|█▏        | 42/339 [00:00<00:03, 84.15it/s]Loading weights:  16%|█▌        | 54/339 [00:00<00:03, 86.73it/s]Loading weights:  19%|█▉        | 66/339 [00:00<00:03, 88.13it/s]Loading weights:  23%|██▎       | 78/339 [00:00<00:02, 89.09it/s]Loading weights:  27%|██▋       | 90/339 [00:01<00:02, 89.95it/s]Loading weights:  30%|███       | 102/339 [00:01<00:02, 89.94it/s]Loading weights:  33%|███▎      | 113/339 [00:01<00:02, 87.57it/s]Loading weights:  37%|███▋      | 126/339 [00:01<00:02, 91.30it/s]Loading weights:  41%|████      | 138/339 [00:01<00:02, 91.13it/s]Loading weights:  44%|████▍     | 150/339 [00:01<00:02, 91.17it/s]Loading weights:  48%|████▊     | 162/339 [00:01<00:01, 91.13it/s]Loading weights:  51%|█████▏    | 174/339 [00:02<00:01, 92.98it/s]Loading weights:  55%|█████▍    | 186/339 [00:02<00:01, 92.61it/s]Loading weights:  58%|█████▊    | 198/339 [00:02<00:01, 91.76it/s]Loading weights:  61%|██████▏   | 208/339 [00:02<00:01, 86.68it/s]Loading weights:  65%|██████▌   | 222/339 [00:02<00:01, 91.94it/s]Loading weights:  69%|██████▉   | 234/339 [00:02<00:01, 91.22it/s]Loading weights:  72%|███████▏  | 245/339 [00:02<00:01, 88.91it/s]Loading weights:  76%|███████▌  | 257/339 [00:02<00:00, 89.17it/s]Loading weights:  80%|███████▉  | 270/339 [00:03<00:00, 91.78it/s]Loading weights:  83%|████████▎ | 282/339 [00:03<00:00, 91.80it/s]Loading weights:  86%|████████▌ | 292/339 [00:03<00:00, 83.56it/s]Loading weights:  90%|█████████ | 306/339 [00:03<00:00, 90.04it/s]Loading weights:  94%|█████████▍| 318/339 [00:03<00:00, 90.15it/s]Loading weights:  97%|█████████▋| 330/339 [00:03<00:00, 89.75it/s]Loading weights: 100%|██████████| 339/339 [00:03<00:00, 89.41it/s]
+
+== Variant k4_guideN_balanced ==
+k4_guideN_balanced:   0%|          | 0/50 [00:00<?, ?it/s]The following generation flags are not valid and may be ignored: ['top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+`torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 291/291 [00:00<00:00, 6520.83it/s]
+
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 291/291 [00:00<00:00, 8415.15it/s]
+The following generation flags are not valid and may be ignored: ['output_attentions']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 148/148 [00:00<00:00, 10534.70it/s]
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+k4_guideN_balanced:   2%|▏         | 1/50 [02:17<1:52:03, 137.21s/it]k4_guideN_balanced:   4%|▍         | 2/50 [04:56<1:59:57, 149.95s/it]k4_guideN_balanced:   6%|▌         | 3/50 [06:44<1:42:42, 131.12s/it]k4_guideN_balanced:   8%|▊         | 4/50 [09:02<1:42:28, 133.67s/it]k4_guideN_balanced:  10%|█         | 5/50 [11:02<1:36:27, 128.62s/it]k4_guideN_balanced:  12%|█▏        | 6/50 [13:03<1:32:38, 126.33s/it]k4_guideN_balanced:  14%|█▍        | 7/50 [15:06<1:29:32, 124.95s/it]k4_guideN_balanced:  16%|█▌        | 8/50 [16:50<1:22:54, 118.45s/it]k4_guideN_balanced:  18%|█▊        | 9/50 [19:04<1:24:19, 123.41s/it]k4_guideN_balanced:  20%|██        | 10/50 [21:38<1:28:27, 132.68s/it]k4_guideN_balanced:  22%|██▏       | 11/50 [24:08<1:29:44, 138.06s/it]k4_guideN_balanced:  24%|██▍       | 12/50 [26:00<1:22:24, 130.12s/it]k4_guideN_balanced:  26%|██▌       | 13/50 [28:44<1:26:29, 140.27s/it]k4_guideN_balanced:  28%|██▊       | 14/50 [30:36<1:19:03, 131.76s/it]k4_guideN_balanced:  30%|███       | 15/50 [32:29<1:13:38, 126.24s/it]k4_guideN_balanced:  32%|███▏      | 16/50 [34:38<1:11:54, 126.90s/it]k4_guideN_balanced:  34%|███▍      | 17/50 [37:03<1:12:53, 132.52s/it]k4_guideN_balanced:  36%|███▌      | 18/50 [40:01<1:17:53, 146.06s/it]k4_guideN_balanced:  38%|███▊      | 19/50 [42:19<1:14:15, 143.73s/it]k4_guideN_balanced:  40%|████      | 20/50 [43:58<1:05:09, 130.32s/it]k4_guideN_balanced:  42%|████▏     | 21/50 [46:12<1:03:29, 131.35s/it]k4_guideN_balanced:  44%|████▍     | 22/50 [48:39<1:03:28, 136.02s/it]k4_guideN_balanced:  46%|████▌     | 23/50 [51:12<1:03:33, 141.24s/it]k4_guideN_balanced:  48%|████▊     | 24/50 [53:22<59:39, 137.67s/it]  k4_guideN_balanced:  50%|█████     | 25/50 [55:25<55:31, 133.26s/it]k4_guideN_balanced:  52%|█████▏    | 26/50 [57:40<53:31, 133.80s/it]k4_guideN_balanced:  54%|█████▍    | 27/50 [59:16<46:56, 122.44s/it]k4_guideN_balanced:  56%|█████▌    | 28/50 [1:01:02<43:05, 117.51s/it]k4_guideN_balanced:  58%|█████▊    | 29/50 [1:03:09<42:08, 120.41s/it]k4_guideN_balanced:  60%|██████    | 30/50 [1:05:04<39:37, 118.85s/it]k4_guideN_balanced:  62%|██████▏   | 31/50 [1:06:51<36:33, 115.43s/it]k4_guideN_balanced:  64%|██████▍   | 32/50 [1:09:15<37:12, 124.02s/it]k4_guideN_balanced:  66%|██████▌   | 33/50 [1:13:23<45:40, 161.22s/it]k4_guideN_balanced:  68%|██████▊   | 34/50 [1:15:34<40:29, 151.86s/it]k4_guideN_balanced:  70%|███████   | 35/50 [1:17:07<33:36, 134.44s/it]k4_guideN_balanced:  72%|███████▏  | 36/50 [1:18:59<29:46, 127.58s/it]k4_guideN_balanced:  74%|███████▍  | 37/50 [1:21:05<27:33, 127.19s/it]k4_guideN_balanced:  76%|███████▌  | 38/50 [1:23:13<25:27, 127.26s/it]k4_guideN_balanced:  78%|███████▊  | 39/50 [1:24:32<20:42, 112.97s/it]k4_guideN_balanced:  80%|████████  | 40/50 [1:26:27<18:53, 113.38s/it]k4_guideN_balanced:  82%|████████▏ | 41/50 [1:28:29<17:25, 116.12s/it]k4_guideN_balanced:  84%|████████▍ | 42/50 [1:30:18<15:11, 113.93s/it]k4_guideN_balanced:  86%|████████▌ | 43/50 [1:32:19<13:32, 116.14s/it]k4_guideN_balanced:  88%|████████▊ | 44/50 [1:34:15<11:36, 116.14s/it]k4_guideN_balanced:  90%|█████████ | 45/50 [1:36:05<09:30, 114.09s/it]k4_guideN_balanced:  92%|█████████▏| 46/50 [1:37:38<07:11, 107.98s/it]k4_guideN_balanced:  94%|█████████▍| 47/50 [1:38:43<04:45, 95.02s/it] k4_guideN_balanced:  96%|█████████▌| 48/50 [1:39:29<02:40, 80.40s/it]k4_guideN_balanced:  98%|█████████▊| 49/50 [1:40:42<01:18, 78.08s/it]k4_guideN_balanced: 100%|██████████| 50/50 [1:41:34<00:00, 70.30s/it]k4_guideN_balanced: 100%|██████████| 50/50 [1:41:34<00:00, 121.89s/it]
+[Saved] rows=outputs/emailqa_fragweave_semantic_program_promptlocate/results_k4_guideN_balanced.csv
+[Saved] summary=outputs/emailqa_fragweave_semantic_program_promptlocate/summary_k4_guideN_balanced.csv
+[Saved] debug=outputs/emailqa_fragweave_semantic_program_promptlocate/debug_k4_guideN_balanced.jsonl
+[Summary]
+{
+  "variant_id": "k4_guideN_balanced",
+  "attack_method": "ours",
+  "profile_mode": "balanced",
+  "guide_version": "N",
+  "n_rows": 50,
+  "n_unique_samples": 50,
+  "asr": 0.3,
+  "loc_f1": 0.22361700034727267,
+  "asr_after_sanitizer_generic": 0.3,
+  "asr_after_sanitizer_task": 0.3,
+  "asr_after_redaction": 0.3,
+  "aggressive_asr_after_sanitizer_generic": 0.26,
+  "aggressive_asr_after_sanitizer_task": 0.26,
+  "aggressive_asr_after_redaction": 0.28,
+  "promptlocate_loc_f1": 0.3104952275253618,
+  "promptlocate_localized_shard_overlap": 0.0,
+  "promptlocate_localized_guide_overlap": 0.0,
+  "asr_after_promptlocate": 0.36,
+  "aggressive_asr_after_promptlocate": 0.24,
+  "promptlocate_error_rate": 0.02,
+  "datasentinel_recall": 0.8,
+  "detector_promptlocate_error_rate": 0.02,
+  "asr_after_detector_promptlocate": 0.36,
+  "aggressive_asr_after_detector_promptlocate": 0.26
+}
+
+
+== Variant k4_guideO_balanced ==
+k4_guideO_balanced:   0%|          | 0/50 [00:00<?, ?it/s]k4_guideO_balanced:   2%|▏         | 1/50 [01:04<52:51, 64.72s/it]k4_guideO_balanced:   4%|▍         | 2/50 [02:33<1:03:06, 78.89s/it]k4_guideO_balanced:   6%|▌         | 3/50 [03:35<55:43, 71.13s/it]  k4_guideO_balanced:   8%|▊         | 4/50 [05:00<58:53, 76.82s/it]k4_guideO_balanced:  10%|█         | 5/50 [06:10<55:39, 74.21s/it]k4_guideO_balanced:  12%|█▏        | 6/50 [07:21<53:42, 73.24s/it]k4_guideO_balanced:  14%|█▍        | 7/50 [08:34<52:25, 73.16s/it]k4_guideO_balanced:  16%|█▌        | 8/50 [09:36<48:37, 69.47s/it]k4_guideO_balanced:  18%|█▊        | 9/50 [10:59<50:20, 73.67s/it]k4_guideO_balanced:  20%|██        | 10/50 [12:29<52:24, 78.61s/it]k4_guideO_balanced:  22%|██▏       | 11/50 [13:57<53:01, 81.58s/it]k4_guideO_balanced:  24%|██▍       | 12/50 [15:13<50:39, 79.99s/it]k4_guideO_balanced:  26%|██▌       | 13/50 [16:48<52:05, 84.48s/it]k4_guideO_balanced:  28%|██▊       | 14/50 [17:52<47:01, 78.37s/it]k4_guideO_balanced:  30%|███       | 15/50 [18:57<43:16, 74.18s/it]k4_guideO_balanced:  32%|███▏      | 16/50 [20:11<42:07, 74.32s/it]k4_guideO_balanced:  34%|███▍      | 17/50 [21:33<42:04, 76.49s/it]k4_guideO_balanced:  36%|███▌      | 18/50 [23:11<44:14, 82.96s/it]k4_guideO_balanced:  38%|███▊      | 19/50 [24:33<42:39, 82.58s/it]k4_guideO_balanced:  40%|████      | 20/50 [25:33<38:00, 76.03s/it]k4_guideO_balanced:  42%|████▏     | 21/50 [26:51<36:58, 76.52s/it]k4_guideO_balanced:  44%|████▍     | 22/50 [28:15<36:48, 78.86s/it]k4_guideO_balanced:  46%|████▌     | 23/50 [29:45<36:53, 81.96s/it]k4_guideO_balanced:  48%|████▊     | 24/50 [30:55<34:00, 78.49s/it]k4_guideO_balanced:  50%|█████     | 25/50 [32:04<31:32, 75.70s/it]k4_guideO_balanced:  52%|█████▏    | 26/50 [34:08<36:00, 90.04s/it]k4_guideO_balanced:  54%|█████▍    | 27/50 [35:03<30:33, 79.70s/it]k4_guideO_balanced:  56%|█████▌    | 28/50 [36:02<26:54, 73.40s/it]k4_guideO_balanced:  58%|█████▊    | 29/50 [37:15<25:40, 73.34s/it]k4_guideO_balanced:  60%|██████    | 30/50 [38:24<24:00, 72.01s/it]k4_guideO_balanced:  62%|██████▏   | 31/50 [39:25<21:45, 68.72s/it]k4_guideO_balanced:  64%|██████▍   | 32/50 [40:37<20:53, 69.66s/it]k4_guideO_balanced:  66%|██████▌   | 33/50 [42:51<25:12, 88.99s/it]k4_guideO_balanced:  68%|██████▊   | 34/50 [44:10<22:54, 85.93s/it]k4_guideO_balanced:  70%|███████   | 35/50 [45:04<19:06, 76.42s/it]k4_guideO_balanced:  72%|███████▏  | 36/50 [46:08<16:57, 72.66s/it]k4_guideO_balanced:  74%|███████▍  | 37/50 [47:24<15:57, 73.66s/it]k4_guideO_balanced:  76%|███████▌  | 38/50 [49:13<16:49, 84.16s/it]k4_guideO_balanced:  78%|███████▊  | 39/50 [50:33<15:13, 83.09s/it]k4_guideO_balanced:  80%|████████  | 40/50 [52:27<15:23, 92.31s/it]k4_guideO_balanced:  82%|████████▏ | 41/50 [54:32<15:18, 102.01s/it]k4_guideO_balanced:  84%|████████▍ | 42/50 [56:24<13:59, 104.99s/it]k4_guideO_balanced:  86%|████████▌ | 43/50 [58:18<12:35, 107.91s/it]k4_guideO_balanced:  88%|████████▊ | 44/50 [1:00:40<11:48, 118.14s/it]k4_guideO_balanced:  90%|█████████ | 45/50 [1:02:29<09:37, 115.41s/it]k4_guideO_balanced:  92%|█████████▏| 46/50 [1:04:19<07:34, 113.58s/it]k4_guideO_balanced:  94%|█████████▍| 47/50 [1:06:15<05:42, 114.32s/it]k4_guideO_balanced:  96%|█████████▌| 48/50 [1:07:49<03:36, 108.26s/it]k4_guideO_balanced:  98%|█████████▊| 49/50 [1:09:57<01:54, 114.16s/it]k4_guideO_balanced: 100%|██████████| 50/50 [1:11:24<00:00, 106.02s/it]k4_guideO_balanced: 100%|██████████| 50/50 [1:11:24<00:00, 85.69s/it] 
+[Saved] rows=outputs/emailqa_fragweave_semantic_program_promptlocate/results_k4_guideO_balanced.csv
+[Saved] summary=outputs/emailqa_fragweave_semantic_program_promptlocate/summary_k4_guideO_balanced.csv
+[Saved] debug=outputs/emailqa_fragweave_semantic_program_promptlocate/debug_k4_guideO_balanced.jsonl
+[Summary]
+{
+  "variant_id": "k4_guideO_balanced",
+  "attack_method": "ours",
+  "profile_mode": "balanced",
+  "guide_version": "o",
+  "n_rows": 50,
+  "n_unique_samples": 50,
+  "asr": 0.3,
+  "loc_f1": 0.1786294345257691,
+  "asr_after_sanitizer_generic": 0.3,
+  "asr_after_sanitizer_task": 0.3,
+  "asr_after_redaction": 0.3,
+  "aggressive_asr_after_sanitizer_generic": 0.28,
+  "aggressive_asr_after_sanitizer_task": 0.28,
+  "aggressive_asr_after_redaction": 0.22,
+  "promptlocate_loc_f1": 0.34186828164891786,
+  "promptlocate_localized_shard_overlap": 0.0,
+  "promptlocate_localized_guide_overlap": 0.0,
+  "asr_after_promptlocate": 0.34,
+  "aggressive_asr_after_promptlocate": 0.22,
+  "promptlocate_error_rate": 0.0,
+  "datasentinel_recall": 0.82,
+  "detector_promptlocate_error_rate": 0.0,
+  "asr_after_detector_promptlocate": 0.34,
+  "aggressive_asr_after_detector_promptlocate": 0.24
+}
+
+
+== Variant k4_guideN_balanced ==
+k4_guideN_balanced:   0%|          | 0/50 [00:00<?, ?it/s]k4_guideN_balanced:   2%|▏         | 1/50 [01:54<1:33:41, 114.72s/it]k4_guideN_balanced:   4%|▍         | 2/50 [04:39<1:55:10, 143.97s/it]k4_guideN_balanced:   6%|▌         | 3/50 [06:33<1:42:17, 130.59s/it]k4_guideN_balanced:   8%|▊         | 4/50 [08:54<1:43:14, 134.67s/it]k4_guideN_balanced:  10%|█         | 5/50 [10:59<1:38:22, 131.17s/it]k4_guideN_balanced:  12%|█▏        | 6/50 [13:02<1:34:02, 128.23s/it]k4_guideN_balanced:  14%|█▍        | 7/50 [15:21<1:34:33, 131.95s/it]k4_guideN_balanced:  16%|█▌        | 8/50 [17:20<1:29:19, 127.60s/it]k4_guideN_balanced:  18%|█▊        | 9/50 [19:40<1:29:52, 131.51s/it]k4_guideN_balanced:  20%|██        | 10/50 [22:17<1:33:00, 139.51s/it]k4_guideN_balanced:  22%|██▏       | 11/50 [25:16<1:38:24, 151.40s/it]k4_guideN_balanced:  24%|██▍       | 12/50 [27:09<1:28:30, 139.75s/it]k4_guideN_balanced:  26%|██▌       | 13/50 [29:18<1:24:17, 136.68s/it]k4_guideN_balanced:  28%|██▊       | 14/50 [31:01<1:15:46, 126.29s/it]k4_guideN_balanced:  30%|███       | 15/50 [32:14<1:04:17, 110.22s/it]k4_guideN_balanced:  32%|███▏      | 16/50 [33:27<56:07, 99.06s/it]   k4_guideN_balanced:  34%|███▍      | 17/50 [34:51<52:03, 94.66s/it]k4_guideN_balanced:  36%|███▌      | 18/50 [36:27<50:45, 95.17s/it]k4_guideN_balanced:  38%|███▊      | 19/50 [37:47<46:44, 90.46s/it]k4_guideN_balanced:  40%|████      | 20/50 [38:48<40:47, 81.59s/it]k4_guideN_balanced:  42%|████▏     | 21/50 [40:06<38:54, 80.49s/it]k4_guideN_balanced:  44%|████▍     | 22/50 [41:30<38:08, 81.72s/it]k4_guideN_balanced:  46%|████▌     | 23/50 [42:59<37:40, 83.73s/it]k4_guideN_balanced:  48%|████▊     | 24/50 [44:14<35:07, 81.04s/it]k4_guideN_balanced:  50%|█████     | 25/50 [45:29<33:00, 79.22s/it]k4_guideN_balanced:  52%|█████▏    | 26/50 [46:47<31:38, 79.09s/it]k4_guideN_balanced:  54%|█████▍    | 27/50 [47:43<27:34, 71.96s/it]k4_guideN_balanced:  56%|█████▌    | 28/50 [48:45<25:20, 69.12s/it]k4_guideN_balanced:  58%|█████▊    | 29/50 [49:59<24:44, 70.68s/it]k4_guideN_balanced:  60%|██████    | 30/50 [51:08<23:18, 69.94s/it]k4_guideN_balanced:  62%|██████▏   | 31/50 [52:28<23:08, 73.06s/it]k4_guideN_balanced:  64%|██████▍   | 32/50 [53:39<21:45, 72.52s/it]k4_guideN_balanced:  66%|██████▌   | 33/50 [55:53<25:47, 91.00s/it]k4_guideN_balanced:  68%|██████▊   | 34/50 [57:08<22:59, 86.24s/it]k4_guideN_balanced:  70%|███████   | 35/50 [58:02<19:04, 76.33s/it]k4_guideN_balanced:  72%|███████▏  | 36/50 [59:05<16:55, 72.56s/it]k4_guideN_balanced:  74%|███████▍  | 37/50 [1:00:21<15:52, 73.31s/it]k4_guideN_balanced:  76%|███████▌  | 38/50 [1:01:32<14:33, 72.80s/it]k4_guideN_balanced:  78%|███████▊  | 39/50 [1:02:19<11:55, 65.08s/it]k4_guideN_balanced:  80%|████████  | 40/50 [1:03:24<10:50, 65.03s/it]k4_guideN_balanced:  82%|████████▏ | 41/50 [1:04:35<10:01, 66.79s/it]k4_guideN_balanced:  84%|████████▍ | 42/50 [1:05:40<08:50, 66.34s/it]k4_guideN_balanced:  86%|████████▌ | 43/50 [1:06:53<07:57, 68.14s/it]k4_guideN_balanced:  88%|████████▊ | 44/50 [1:08:13<07:10, 71.80s/it]k4_guideN_balanced:  90%|█████████ | 45/50 [1:09:16<05:45, 69.18s/it]k4_guideN_balanced:  92%|█████████▏| 46/50 [1:10:19<04:29, 67.46s/it]k4_guideN_balanced:  94%|█████████▍| 47/50 [1:11:25<03:20, 66.82s/it]k4_guideN_balanced:  96%|█████████▌| 48/50 [1:12:11<02:01, 60.67s/it]k4_guideN_balanced:  98%|█████████▊| 49/50 [1:13:24<01:04, 64.45s/it]k4_guideN_balanced: 100%|██████████| 50/50 [1:14:15<00:00, 60.34s/it]k4_guideN_balanced: 100%|██████████| 50/50 [1:14:15<00:00, 89.11s/it]
+[Saved] rows=outputs/emailqa_fragweave_semantic_program_promptlocate/results_k4_guideN_balanced_1.csv
+[Saved] summary=outputs/emailqa_fragweave_semantic_program_promptlocate/summary_k4_guideN_balanced_1.csv
+[Saved] debug=outputs/emailqa_fragweave_semantic_program_promptlocate/debug_k4_guideN_balanced_1.jsonl
+[Summary]
+{
+  "variant_id": "k4_guideN_balanced",
+  "attack_method": "ours",
+  "profile_mode": "balanced",
+  "guide_version": "n",
+  "n_rows": 50,
+  "n_unique_samples": 50,
+  "asr": 0.3,
+  "loc_f1": 0.22894506401339026,
+  "asr_after_sanitizer_generic": 0.3,
+  "asr_after_sanitizer_task": 0.3,
+  "asr_after_redaction": 0.3,
+  "aggressive_asr_after_sanitizer_generic": 0.26,
+  "aggressive_asr_after_sanitizer_task": 0.28,
+  "aggressive_asr_after_redaction": 0.24,
+  "promptlocate_loc_f1": 0.2950498018721654,
+  "promptlocate_localized_shard_overlap": 0.0,
+  "promptlocate_localized_guide_overlap": 0.0,
+  "asr_after_promptlocate": 0.36,
+  "aggressive_asr_after_promptlocate": 0.26,
+  "promptlocate_error_rate": 0.02,
+  "datasentinel_recall": 0.82,
+  "detector_promptlocate_error_rate": 0.02,
+  "asr_after_detector_promptlocate": 0.36,
+  "aggressive_asr_after_detector_promptlocate": 0.28
+}
+
+
+== Variant k4_guideE_balanced ==
+k4_guideE_balanced:   0%|          | 0/50 [00:00<?, ?it/s]k4_guideE_balanced:   2%|▏         | 1/50 [01:02<51:21, 62.88s/it]k4_guideE_balanced:   4%|▍         | 2/50 [02:33<1:03:32, 79.43s/it]k4_guideE_balanced:   6%|▌         | 3/50 [03:39<57:10, 72.99s/it]  k4_guideE_balanced:   8%|▊         | 4/50 [05:01<58:51, 76.77s/it]k4_guideE_balanced:  10%|█         | 5/50 [06:11<55:38, 74.19s/it]k4_guideE_balanced:  12%|█▏        | 6/50 [07:21<53:20, 72.75s/it]k4_guideE_balanced:  14%|█▍        | 7/50 [08:32<51:45, 72.22s/it]k4_guideE_balanced:  16%|█▌        | 8/50 [09:32<47:48, 68.30s/it]k4_guideE_balanced:  18%|█▊        | 9/50 [10:51<48:59, 71.69s/it]k4_guideE_balanced:  20%|██        | 10/50 [12:21<51:34, 77.36s/it]k4_guideE_balanced:  22%|██▏       | 11/50 [14:05<55:31, 85.42s/it]k4_guideE_balanced:  24%|██▍       | 12/50 [15:21<52:16, 82.55s/it]k4_guideE_balanced:  26%|██▌       | 13/50 [16:55<53:08, 86.19s/it]k4_guideE_balanced:  28%|██▊       | 14/50 [18:00<47:46, 79.62s/it]k4_guideE_balanced:  30%|███       | 15/50 [19:01<43:11, 74.05s/it]k4_guideE_balanced:  32%|███▏      | 16/50 [20:14<41:50, 73.84s/it]k4_guideE_balanced:  34%|███▍      | 17/50 [21:34<41:30, 75.48s/it]k4_guideE_balanced:  36%|███▌      | 18/50 [23:10<43:32, 81.63s/it]k4_guideE_balanced:  38%|███▊      | 19/50 [24:30<42:03, 81.41s/it]k4_guideE_balanced:  40%|████      | 20/50 [25:28<37:04, 74.14s/it]k4_guideE_balanced:  40%|████      | 20/50 [26:20<39:31, 79.04s/it]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep_promptlocate.py", line 960, in <module>
+    main()
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep_promptlocate.py", line 821, in main
+    cons_clean_task, cons_task_dbg = _sanitize_with_checks(sanitize_context, sanitizer, poisoned_context, system_prompt=cons_task_prompt, max_new_tokens=int(getattr(cfg.sanitization, "sanitizer_max_new_tokens", 2048) or 2048), task=task, max_drop_ratio=float(getattr(cfg.sanitization, "conservative_max_drop_ratio", 0.14) or 0.14), min_output_ratio=float(getattr(cfg.sanitization, "conservative_min_output_ratio", 0.78) or 0.78))
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 328, in _sanitize_with_checks
+    raw2 = _call_sanitize_context(sanitize_fn, sanitizer_chat, context, system_prompt=strict_prompt, max_new_tokens=max_new_tokens)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/run_sweep.py", line 272, in _call_sanitize_context
+    return sanitize_fn(sanitizer_chat, context, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/defenses/sanitizer.py", line 33, in sanitize_context
+    raw = chat.generate(prompt)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/code/fragweave_project/fragweave/models/hf_chat.py", line 130, in generate
+    out = self.model.generate(
+          ^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 2535, in generate
+    result = decoding_method(
+             ^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/generation/utils.py", line 2742, in _sample
+    outputs = model_forward(**model_inputs, return_dict=True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 192, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/utils/generic.py", line 843, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 476, in forward
+    outputs: BaseModelOutputWithPast = self.model(
+                                       ^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/utils/generic.py", line 917, in wrapper
+    output = func(self, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/utils/output_capturing.py", line 253, in wrapper
+    outputs = func(self, *args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 411, in forward
+    hidden_states = decoder_layer(
+                    ^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/modeling_layers.py", line 93, in __call__
+    return super().__call__(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 192, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 298, in forward
+    hidden_states, _ = self.self_attn(
+                       ^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1553, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1562, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/accelerate/hooks.py", line 192, in new_forward
+    output = module._old_forward(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/models/qwen2/modeling_qwen2.py", line 234, in forward
+    attn_output, attn_weights = attention_interface(
+                                ^^^^^^^^^^^^^^^^^^^^
+  File "/home/gwu3/anaconda3/envs/p311t21/lib/python3.11/site-packages/transformers/integrations/sdpa_attention.py", line 92, in sdpa_attention_forward
+    attn_output = torch.nn.functional.scaled_dot_product_attention(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
