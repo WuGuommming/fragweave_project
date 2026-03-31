@@ -1,0 +1,47 @@
+[Config] {"task": "summarization", "attack_method": "rewrite", "variants": [{"variant_id": "rewrite", "profile_mode": ""}], "combined_parts": ["ignore", "escape", "fakecom"], "native_attack_limit": null, "insertion_policy": "append", "rewrite_context_max_chars": 1200, "rewrite_model_name_or_path": "Qwen/Qwen2.5-7B-Instruct", "opi_root": "third_party/Open-Prompt-Injection", "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json", "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel", "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate", "opi_helper_model": "gpt2", "opi_sep_thres": 0.0, "promptlocate_conservative_enable": true, "target_debug_probes": true, "target_debug_skip_fragment_probe": false}
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<00:48,  6.97it/s]Loading weights:   1%|          | 2/339 [00:00<00:55,  6.10it/s]Loading weights:   5%|▍         | 16/339 [00:00<00:06, 46.43it/s]Loading weights:   8%|▊         | 28/339 [00:00<00:04, 64.61it/s]Loading weights:  12%|█▏        | 40/339 [00:00<00:04, 74.68it/s]Loading weights:  15%|█▌        | 52/339 [00:00<00:03, 80.93it/s]Loading weights:  19%|█▉        | 64/339 [00:00<00:03, 83.56it/s]Loading weights:  22%|██▏       | 75/339 [00:01<00:03, 83.94it/s]Loading weights:  26%|██▌       | 88/339 [00:01<00:02, 89.50it/s]Loading weights:  29%|██▉       | 100/339 [00:01<00:02, 90.58it/s]Loading weights:  33%|███▎      | 112/339 [00:01<00:02, 91.46it/s]Loading weights:  37%|███▋      | 124/339 [00:01<00:02, 91.92it/s]Loading weights:  40%|████      | 136/339 [00:01<00:02, 92.12it/s]Loading weights:  44%|████▎     | 148/339 [00:01<00:02, 92.40it/s]Loading weights:  47%|████▋     | 160/339 [00:01<00:01, 92.57it/s]Loading weights:  51%|█████     | 172/339 [00:02<00:01, 85.21it/s]Loading weights:  55%|█████▍    | 185/339 [00:02<00:01, 89.54it/s]Loading weights:  58%|█████▊    | 197/339 [00:02<00:01, 90.33it/s]Loading weights:  61%|██████▏   | 208/339 [00:02<00:01, 88.65it/s]Loading weights:  65%|██████▍   | 220/339 [00:02<00:01, 89.61it/s]Loading weights:  69%|██████▊   | 233/339 [00:02<00:01, 92.65it/s]Loading weights:  72%|███████▏  | 245/339 [00:02<00:01, 92.72it/s]Loading weights:  76%|███████▌  | 257/339 [00:03<00:00, 92.73it/s]Loading weights:  79%|███████▉  | 269/339 [00:03<00:00, 92.54it/s]Loading weights:  83%|████████▎ | 281/339 [00:03<00:00, 92.20it/s]Loading weights:  86%|████████▋ | 293/339 [00:03<00:00, 92.26it/s]Loading weights:  90%|████████▉ | 305/339 [00:03<00:00, 84.92it/s]Loading weights:  94%|█████████▍| 318/339 [00:03<00:00, 89.35it/s]Loading weights:  97%|█████████▋| 330/339 [00:03<00:00, 90.19it/s]Loading weights: 100%|██████████| 339/339 [00:03<00:00, 86.72it/s]
+
+== Variant rewrite ==
+rewrite:   0%|          | 0/50 [00:00<?, ?it/s]The following generation flags are not valid and may be ignored: ['top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+`torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 291/291 [00:00<00:00, 7254.21it/s]
+
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 291/291 [00:00<00:00, 7901.28it/s]
+The following generation flags are not valid and may be ignored: ['output_attentions']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s][ALoading weights: 100%|██████████| 148/148 [00:00<00:00, 9904.85it/s]
+The following generation flags are not valid and may be ignored: ['temperature']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+rewrite:   2%|▏         | 1/50 [01:27<1:11:07, 87.10s/it]rewrite:   4%|▍         | 2/50 [03:16<1:20:07, 100.15s/it]rewrite:   6%|▌         | 3/50 [04:46<1:14:47, 95.47s/it] rewrite:   8%|▊         | 4/50 [06:39<1:18:35, 102.52s/it]rewrite:  10%|█         | 5/50 [07:57<1:10:12, 93.60s/it] rewrite:  12%|█▏        | 6/50 [08:32<54:01, 73.66s/it]  rewrite:  14%|█▍        | 7/50 [09:50<53:53, 75.20s/it]rewrite:  16%|█▌        | 8/50 [11:44<1:01:16, 87.53s/it]rewrite:  18%|█▊        | 9/50 [13:02<57:39, 84.38s/it]  rewrite:  20%|██        | 10/50 [14:23<55:43, 83.58s/it]rewrite:  22%|██▏       | 11/50 [16:10<58:56, 90.67s/it]rewrite:  24%|██▍       | 12/50 [17:28<54:51, 86.62s/it]rewrite:  26%|██▌       | 13/50 [19:15<57:21, 93.02s/it]rewrite:  28%|██▊       | 14/50 [20:24<51:28, 85.80s/it]rewrite:  30%|███       | 15/50 [21:30<46:30, 79.74s/it]rewrite:  32%|███▏      | 16/50 [22:13<38:52, 68.60s/it]rewrite:  34%|███▍      | 17/50 [24:02<44:27, 80.83s/it]rewrite:  36%|███▌      | 18/50 [24:58<39:03, 73.24s/it]rewrite:  38%|███▊      | 19/50 [26:39<42:13, 81.72s/it]rewrite:  40%|████      | 20/50 [28:19<43:32, 87.09s/it]rewrite:  42%|████▏     | 21/50 [29:38<41:00, 84.84s/it]rewrite:  44%|████▍     | 22/50 [31:28<43:02, 92.23s/it]rewrite:  46%|████▌     | 23/50 [33:05<42:14, 93.85s/it]rewrite:  48%|████▊     | 24/50 [34:56<42:53, 98.99s/it]rewrite:  50%|█████     | 25/50 [36:46<42:38, 102.33s/it]rewrite:  52%|█████▏    | 26/50 [37:50<36:17, 90.71s/it] rewrite:  54%|█████▍    | 27/50 [39:08<33:15, 86.76s/it]rewrite:  56%|█████▌    | 28/50 [40:56<34:10, 93.20s/it]rewrite:  58%|█████▊    | 29/50 [42:54<35:16, 100.80s/it]rewrite:  60%|██████    | 30/50 [44:16<31:43, 95.19s/it] rewrite:  62%|██████▏   | 31/50 [45:32<28:19, 89.42s/it]rewrite:  64%|██████▍   | 32/50 [46:21<23:11, 77.29s/it]rewrite:  66%|██████▌   | 33/50 [47:37<21:44, 76.75s/it]rewrite:  68%|██████▊   | 34/50 [49:16<22:14, 83.41s/it]rewrite:  70%|███████   | 35/50 [51:20<23:56, 95.77s/it]rewrite:  72%|███████▏  | 36/50 [52:26<20:12, 86.59s/it]rewrite:  74%|███████▍  | 37/50 [54:17<20:20, 93.88s/it]rewrite:  76%|███████▌  | 38/50 [55:43<18:20, 91.68s/it]rewrite:  78%|███████▊  | 39/50 [56:37<14:44, 80.38s/it]rewrite:  80%|████████  | 40/50 [58:09<13:58, 83.87s/it]rewrite:  82%|████████▏ | 41/50 [59:37<12:44, 84.93s/it]rewrite:  84%|████████▍ | 42/50 [1:00:55<11:02, 82.87s/it]rewrite:  86%|████████▌ | 43/50 [1:02:53<10:54, 93.45s/it]rewrite:  88%|████████▊ | 44/50 [1:04:18<09:05, 90.93s/it]rewrite:  90%|█████████ | 45/50 [1:05:32<07:09, 85.95s/it]rewrite:  92%|█████████▏| 46/50 [1:06:44<05:26, 81.60s/it]rewrite:  94%|█████████▍| 47/50 [1:08:50<04:44, 94.95s/it]rewrite:  96%|█████████▌| 48/50 [1:10:11<03:01, 90.98s/it]rewrite:  98%|█████████▊| 49/50 [1:11:20<01:24, 84.25s/it]rewrite: 100%|██████████| 50/50 [1:12:50<00:00, 86.04s/it]rewrite: 100%|██████████| 50/50 [1:12:50<00:00, 87.41s/it]
+[Saved] rows=outputs/summary_fragweave_semantic_program_promptlocate/results_rewrite.csv
+[Saved] summary=outputs/summary_fragweave_semantic_program_promptlocate/summary_rewrite.csv
+[Saved] debug=outputs/summary_fragweave_semantic_program_promptlocate/debug_rewrite.jsonl
+[Summary]
+{
+  "variant_id": "rewrite",
+  "task": "summarization",
+  "attack_method": "rewrite",
+  "profile_mode": "",
+  "guide_version": "",
+  "n_rows": 50,
+  "n_unique_samples": 50,
+  "asr": 0.32,
+  "loc_f1": 0.2818709017548755,
+  "asr_after_sanitizer_generic": 0.28,
+  "asr_after_sanitizer_task": 0.28,
+  "asr_after_redaction": 0.28,
+  "aggressive_asr_after_sanitizer_generic": 0.18,
+  "aggressive_asr_after_sanitizer_task": 0.22,
+  "aggressive_asr_after_redaction": 0.24,
+  "promptlocate_loc_f1": 0.7772060877881924,
+  "promptlocate_localized_shard_overlap": 0.0,
+  "promptlocate_localized_guide_overlap": 0.0,
+  "asr_after_promptlocate": 0.26,
+  "aggressive_asr_after_promptlocate": 0.12,
+  "promptlocate_error_rate": 0.0,
+  "datasentinel_recall": 0.86,
+  "detector_promptlocate_error_rate": 0.0,
+  "asr_after_detector_promptlocate": 0.28,
+  "aggressive_asr_after_detector_promptlocate": 0.16
+}
+

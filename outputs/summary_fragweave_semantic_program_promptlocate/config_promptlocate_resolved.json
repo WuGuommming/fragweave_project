@@ -1,0 +1,28 @@
+{
+  "task": "summarization",
+  "attack_method": "rewrite",
+  "variants": [
+    {
+      "variant_id": "rewrite",
+      "profile_mode": ""
+    }
+  ],
+  "combined_parts": [
+    "ignore",
+    "escape",
+    "fakecom"
+  ],
+  "native_attack_limit": null,
+  "insertion_policy": "append",
+  "rewrite_context_max_chars": 1200,
+  "rewrite_model_name_or_path": "Qwen/Qwen2.5-7B-Instruct",
+  "opi_root": "third_party/Open-Prompt-Injection",
+  "opi_model_config": "third_party/Open-Prompt-Injection/configs/model_configs/mistral_config.json",
+  "opi_detector_ft_path": "third_party/open_prompt_injection_assets/datasentinel",
+  "opi_promptlocate_ft_path": "third_party/open_prompt_injection_assets/promptlocate",
+  "opi_helper_model": "gpt2",
+  "opi_sep_thres": 0.0,
+  "promptlocate_conservative_enable": true,
+  "target_debug_probes": true,
+  "target_debug_skip_fragment_probe": false
+}
