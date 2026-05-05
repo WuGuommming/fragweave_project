@@ -1,9 +1,9 @@
 {
   "task": "web_qa",
-  "attack_method": "bipia_native",
+  "attack_method": "combined",
   "variants": [
     {
-      "variant_id": "bipia_native",
+      "variant_id": "combined",
       "profile_mode": ""
     }
   ],
